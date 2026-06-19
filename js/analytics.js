@@ -67,23 +67,43 @@ const Analytics = (() => {
    * Nutzt den kanonischen Fragenkatalog (window.QUESTIONS) fuer Reihenfolge und
    * vollstaendige Antwortoptionen – auch fuer Optionen, die nie gewaehlt wurden.
    */
+  /**
+   * Liefert die "Antwortoptionen" einer Frage fuer die Verteilungs-Anzeige.
+   * Nur Multiple-Choice und Wahr/Falsch lassen sich sinnvoll verteilen;
+   * fuer Reihenfolge/Zuordnen gibt es keine Einzeloption -> leeres Array.
+   */
+  function optionsFor(q) {
+    const type = q.type || 'mc';
+    if (type === 'mc') {
+      return q.options.map((text, i) => ({ text, isCorrect: i === q.correct }));
+    }
+    if (type === 'truefalse') {
+      return [
+        { text: 'Wahr', isCorrect: q.answer === true },
+        { text: 'Falsch', isCorrect: q.answer === false }
+      ];
+    }
+    return [];
+  }
+
   function byQuestion(responses, questions) {
     return questions.map((q) => {
       const rows = responses.filter((r) => r.qId === q.id);
       const total = rows.length;
       const correct = rows.filter((r) => r.isCorrect).length;
-      const unanswered = rows.filter((r) => !r.chosenText).length;
+      const unanswered = rows.filter((r) => r.answered === false).length;
 
-      const options = q.options.map((text, i) => ({
-        text,
-        isCorrect: i === q.correct,
-        count: rows.filter((r) => r.chosenText === text).length
+      const options = optionsFor(q).map((o) => ({
+        text: o.text,
+        isCorrect: o.isCorrect,
+        count: rows.filter((r) => r.chosenText === o.text).length
       }));
 
       return {
         qId: q.id,
         q: q.q,
         level: q.level,
+        type: q.type || 'mc',
         total,
         correct,
         wrong: total - correct,

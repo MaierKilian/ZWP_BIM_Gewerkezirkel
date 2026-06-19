@@ -332,6 +332,60 @@ select.form__input {
 
 .quiz-actions { display: flex; justify-content: flex-end; margin-top: 26px; }
 
+/* Hinweistext über interaktiven Aufgaben */
+.q-prompt { font-size: 0.9rem; color: var(--ink-soft); margin: 0 0 14px; }
+
+/* Wahr / Falsch */
+.options--truefalse { flex-direction: row; gap: 12px; }
+.option--tf { flex: 1; justify-content: center; font-weight: 600; padding: 22px 16px; }
+.option--tf .option__text { font-size: 1.05rem; }
+.option--tf-yes.is-selected { border-color: var(--green); background: var(--green-soft); box-shadow: 0 0 0 3px var(--green-soft); }
+.option--tf-yes.is-selected .option__key { background: var(--green); color: #fff; }
+.option--tf-no.is-selected { border-color: var(--red); background: var(--red-soft); box-shadow: 0 0 0 3px var(--red-soft); }
+.option--tf-no.is-selected .option__key { background: var(--red); color: #fff; }
+
+/* Reihenfolge */
+.order-list { display: flex; flex-direction: column; gap: 10px; }
+.order-item {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.order-item__pos {
+  width: 28px; height: 28px; display: grid; place-items: center;
+  font-weight: 700; font-size: 0.85rem; border-radius: 8px;
+  background: var(--zwp-blue-soft); color: var(--zwp-blue-dark);
+}
+.order-item__text { font-size: 0.96rem; line-height: 1.35; }
+.order-item__moves { display: flex; flex-direction: column; gap: 4px; }
+.move-btn {
+  width: 34px; height: 22px; display: grid; place-items: center;
+  border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-soft);
+  border-radius: 6px; cursor: pointer; font-size: 0.7rem; line-height: 1;
+}
+.move-btn:hover:not(:disabled) { border-color: var(--zwp-blue); color: var(--zwp-blue-dark); }
+.move-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Zuordnen / Verbinden */
+.match-list { display: flex; flex-direction: column; gap: 10px; }
+.match-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.match-row__left { font-weight: 600; font-size: 0.96rem; }
+.match-select { width: 100%; }
+
 /* ---------------- Ergebnis ---------------- */
 .rank-badge {
   display: inline-block;
@@ -443,6 +497,18 @@ select.form__input {
   padding-top: 10px;
   border-top: 1px dashed var(--line);
 }
+
+/* Auflösung: Reihenfolge (zwei Spalten) */
+.review-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 10px; }
+.review-col-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); margin: 0 0 6px; }
+
+/* Auflösung: Zuordnen */
+.review-answers--match li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.match-rev__left { font-weight: 600; }
+.match-rev__pick { padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+.match-rev__pick.correct { background: var(--green-soft); color: #1f6b41; }
+.match-rev__pick.wrong { background: var(--red-soft); color: #9c352e; }
+.match-rev__fix { color: var(--green); font-weight: 600; font-size: 0.86rem; }
 
 /* ---------------- Bestenliste ---------------- */
 .leaderboard-head { margin-bottom: 18px; }
@@ -593,6 +659,12 @@ select.form__input {
 }
 .q-item.is-open .q-item__head::after { transform: rotate(180deg); }
 .q-item__num { flex: none; }
+.q-item__type {
+  flex: none; font-size: 0.7rem; font-weight: 600; color: var(--muted);
+  background: var(--bg); padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+}
+.q-item__head[data-nodist] { cursor: default; }
+.q-item__head[data-nodist]::after { content: none; }
 .q-item__text { flex: 1; font-weight: 600; font-size: 0.94rem; line-height: 1.35; }
 .q-item__rate { flex: none; font-weight: 700; color: var(--zwp-blue-dark); font-variant-numeric: tabular-nums; }
 
@@ -639,4 +711,8 @@ select.form__input {
   .bar-row__meta { grid-column: 2; justify-self: start; }
   .dist-row { grid-template-columns: 24px 1fr auto; }
   .dist-row__track { display: none; }
+
+  .match-row { grid-template-columns: 1fr; gap: 6px; }
+  .review-cols { grid-template-columns: 1fr; }
+  .q-item__type { display: none; }
 }

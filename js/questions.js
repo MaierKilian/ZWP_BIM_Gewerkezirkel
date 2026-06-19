@@ -377,6 +377,101 @@ const QUESTIONS = [
     ],
     correct: 1,
     explanation: 'Closed BIM funktioniert nur, wenn alle Beteiligten Software, Modellierungsregeln, Berechnungs-/Schnittstellenprozesse und Verantwortlichkeiten beherrschen und akzeptieren.'
+  },
+
+  // ============================================================ WAHR / FALSCH
+  {
+    id: 31, level: 'easy', type: 'truefalse',
+    q: 'Wahr oder falsch? BIM ist ein einzelnes Software-Programm.',
+    answer: false,
+    explanation: 'Falsch. BIM ist eine kooperative Arbeitsmethodik mit digitalen Modellen und Informationen – nicht ein bestimmtes Programm.'
+  },
+  {
+    id: 32, level: 'easy', type: 'truefalse',
+    q: 'Wahr oder falsch? Der BAP (BIM-Projektabwicklungsplan) regelt die Zusammenarbeit im BIM-Projekt.',
+    answer: true,
+    explanation: 'Wahr. Der BAP ist die verbindliche Grundlage der Zusammenarbeit: Ziele, Rollen, Prozesse und Austauschanforderungen.'
+  },
+  {
+    id: 33, level: 'medium', type: 'truefalse',
+    q: 'Wahr oder falsch? Open BIM ist grundsätzlich immer besser als Closed BIM.',
+    answer: false,
+    explanation: 'Falsch. Beide Ansätze haben Vor- und Nachteile – der Einsatz wird projektspezifisch entschieden.'
+  },
+  {
+    id: 34, level: 'hard', type: 'truefalse',
+    q: 'Wahr oder falsch? Eine Kollisionsprüfung ist nur sinnvoll, wenn sie einmalig kurz vor Baubeginn durchgeführt wird.',
+    answer: false,
+    explanation: 'Falsch. Kollisionsprüfungen gehören iterativ in die Planung (z. B. Ende LP3 sowie Mitte/Ende LP5), um Konflikte früh und wirtschaftlich zu lösen.'
+  },
+
+  // ============================================================ REIHENFOLGE
+  {
+    id: 35, level: 'medium', type: 'order',
+    q: 'Bring die Schritte der modellbasierten Koordination in die richtige Reihenfolge.',
+    items: [
+      'Fachmodelle der Gewerke erstellen',
+      'Fachmodelle zum Koordinationsmodell zusammenführen',
+      'Kollisionsprüfung durchführen',
+      'Konflikte abstimmen und beheben'
+    ],
+    explanation: 'Erst entstehen die Fachmodelle, dann das Koordinationsmodell, darauf folgt die Kollisionsprüfung und zuletzt das Beheben der Konflikte.'
+  },
+  {
+    id: 36, level: 'hard', type: 'order',
+    q: 'Ordne die ZWP-Kollisionskontrollen nach Zeitpunkt (zuerst → zuletzt).',
+    items: [
+      'Ende Leistungsphase 3',
+      'Mitte Leistungsphase 5',
+      'Ende Leistungsphase 5'
+    ],
+    explanation: 'Bei ZWP sind Kollisionskontrollen am Ende LP3 sowie in der Mitte und am Ende LP5 vorgesehen – iterativ über die Planung verteilt.'
+  },
+  {
+    id: 37, level: 'hard', type: 'order',
+    q: 'Bring den BIM-Datennutzen über den Lebenszyklus in die übliche Reihenfolge (früh → spät).',
+    items: [
+      'Planung & Koordination (Modellaufbau, Kollisionsprüfung)',
+      'Mengen & Kosten aus dem Modell',
+      'BIM2Field – Modelldaten auf der Baustelle',
+      'BIM2FM – Daten für den Betrieb'
+    ],
+    explanation: 'Der Modellnutzen wächst über den Lebenszyklus: von Planung/Koordination über Mengen/Kosten zur Ausführung (BIM2Field) bis in den Betrieb (BIM2FM).'
+  },
+
+  // ============================================================ ZUORDNEN
+  {
+    id: 38, level: 'medium', type: 'match',
+    q: 'Ordne jeder Abkürzung die richtige Bedeutung zu.',
+    pairs: [
+      { left: 'BAP', right: 'BIM-Projektabwicklungsplan' },
+      { left: 'IFC', right: 'Offenes Austauschformat für Modelldaten' },
+      { left: 'SuD', right: 'Schlitz- und Durchbruchsplanung' },
+      { left: 'LOD', right: 'Detaillierungsgrad eines Bauteils' }
+    ],
+    explanation: 'BAP = BIM-Projektabwicklungsplan, IFC = offenes Austauschformat, SuD = Schlitz- und Durchbruchsplanung, LOD = Detaillierungsgrad (Level of Development/Detail).'
+  },
+  {
+    id: 39, level: 'hard', type: 'match',
+    q: 'Ordne jeder BIM-Rolle ihre Hauptaufgabe zu.',
+    pairs: [
+      { left: 'BIM-Manager', right: 'Prozesse & Vorgaben projektübergreifend steuern' },
+      { left: 'BIM-Gesamtkoordinator', right: 'Fachmodelle gewerkeübergreifend zusammenführen' },
+      { left: 'BIM-Koordinator', right: 'Qualität des eigenen Fachmodells verantworten' },
+      { left: 'BIM-Autor', right: 'Modell fachlich erstellen und pflegen' }
+    ],
+    explanation: 'Der BIM-Manager steuert Prozesse/Vorgaben, der Gesamtkoordinator führt die Fachmodelle zusammen, der Koordinator verantwortet das Fachmodell, der Autor modelliert.'
+  },
+  {
+    id: 40, level: 'hard', type: 'match',
+    q: 'Ordne jedem BIM-Anwendungsfall die passende Beschreibung zu.',
+    pairs: [
+      { left: 'Kollisionsprüfung', right: 'Räumliche Konflikte zwischen Modellen erkennen' },
+      { left: 'Mengenermittlung', right: 'Mengen modellbasiert aus Bauteilen ableiten' },
+      { left: 'BIM2Field', right: 'Modelldaten für die Ausführung auf der Baustelle' },
+      { left: 'BIM2FM', right: 'Modelldaten für den späteren Gebäudebetrieb' }
+    ],
+    explanation: 'Kollisionsprüfung = Konflikte erkennen, Mengenermittlung = Mengen aus dem Modell, BIM2Field = Daten auf der Baustelle, BIM2FM = Daten für den Betrieb.'
   }
 ];
 

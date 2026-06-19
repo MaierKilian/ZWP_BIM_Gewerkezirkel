@@ -10,6 +10,11 @@ und die Arbeitsweise bei ZWP und landen anschließend in einer Bestenliste.
   (Berlin, Bochum, Dresden, Hamburg, Köln, München, Erding, Stuttgart)
 - **15 Fragen pro Durchlauf**, gewichtet zufällig gezogen
   (3 leichte · 6 mittlere · 6 schwere) – jeder Durchlauf ist anders
+- **Vier Fragetypen** für Abwechslung (mind. 3 interaktive je Durchlauf):
+  - **Multiple Choice**
+  - **Wahr/Falsch**
+  - **Reihenfolge** (Elemente per ↑/↓ ordnen)
+  - **Zuordnen** (Begriff → Passendes verbinden)
 - **Wertung aus richtigen Antworten + Schnelligkeit**
   (schwierigere Fragen geben mehr Punkte, schnelle Antworten einen kleinen Bonus)
 - **Auflösung erst am Ende**: pro Frage richtige Antwort, eigene Wahl und Erklärung
@@ -64,20 +69,29 @@ restliche Code bleibt unverändert.
 
 ## Fragen pflegen
 
-Alle Fragen stehen in `js/questions.js`. Jede Frage hat:
+Alle Fragen stehen in `js/questions.js`. Das Feld `type` bestimmt den Typ
+(fehlt es, gilt `mc`). Antwortreihenfolge und Fragenauswahl werden zur Laufzeit
+gemischt.
 
 ```js
-{
-  id: 1,
-  level: 'easy',          // 'easy' | 'medium' | 'hard'
-  q: 'Fragetext …',
-  options: ['…', '…', '…', '…'],
-  correct: 1,             // Index der richtigen Antwort in options
-  explanation: 'Kurze Begründung für die Auflösung.'
-}
+// Multiple Choice (Standard)
+{ id: 1, level: 'easy', q: '…', options: ['…','…','…','…'], correct: 1, explanation: '…' }
+
+// Wahr/Falsch
+{ id: 31, level: 'easy', type: 'truefalse', q: '…', answer: false, explanation: '…' }
+
+// Reihenfolge (items in RICHTIGER Reihenfolge angeben)
+{ id: 35, level: 'medium', type: 'order', q: '…',
+  items: ['Schritt 1','Schritt 2','Schritt 3'], explanation: '…' }
+
+// Zuordnen (Paare links → rechts)
+{ id: 38, level: 'medium', type: 'match', q: '…',
+  pairs: [{ left: 'BAP', right: 'BIM-Projektabwicklungsplan' }, /* … */], explanation: '…' }
 ```
 
-Antwortreihenfolge und Fragenauswahl werden zur Laufzeit gemischt.
+`level` ist immer `'easy' | 'medium' | 'hard'`. Die Auswertung zeigt die
+Antwortverteilung für Multiple-Choice und Wahr/Falsch; Reihenfolge/Zuordnen
+fließen mit richtig/falsch in die Statistik ein.
 
 ## Projektstruktur
 

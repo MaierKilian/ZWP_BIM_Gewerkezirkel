@@ -7,6 +7,7 @@
 
   const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
   const LEVEL_LABEL = { easy: 'leicht', medium: 'mittel', hard: 'schwer' };
+  const TYPE_LABEL = { mc: 'Multiple Choice', truefalse: 'Wahr/Falsch', order: 'Reihenfolge', match: 'Zuordnen' };
 
   // ---- DOM-Referenzen ----
   const screens = {
@@ -74,7 +75,8 @@
     session: null,
     quizStart: 0,
     questionStart: 0,
-    selectedIndex: null,
+    currentAnswer: null,
+    answerComplete: false,
     lastResult: null,
     lastRank: null,
     lastEntryId: null,
@@ -148,45 +150,153 @@
     renderQuestion();
   }
 
+  // Setzt die aktuelle Antwort und schaltet den Weiter-Button frei/zu.
+  function setAnswer(value, complete) {
+    state.currentAnswer = value;
+    state.answerComplete = complete;
+    el.btnNext.disabled = !complete;
+  }
+
   function renderQuestion() {
     const session = state.session;
     const q = session.current();
-    state.selectedIndex = null;
     state.questionStart = Date.now();
+    setAnswer(null, false);
 
     el.qCounter.textContent = `Frage ${session.index + 1} / ${session.total}`;
     el.qLevel.textContent = LEVEL_LABEL[q.level];
     el.qLevel.dataset.level = q.level;
     el.qText.textContent = q.q;
+    el.qText.classList.toggle('question--withprompt', q.type === 'order' || q.type === 'match');
 
     el.progressFill.style.width = `${(session.index / session.total) * 100}%`;
+    el.btnNext.textContent = session.isLast() ? 'Auswerten' : 'Weiter';
 
     el.qOptions.innerHTML = '';
+    el.qOptions.className = `options options--${q.type}`;
+    switch (q.type) {
+      case 'truefalse': renderTrueFalse(q); break;
+      case 'order':     renderOrder(q); break;
+      case 'match':     renderMatch(q); break;
+      default:          renderMc(q);
+    }
+  }
+
+  function renderMc(q) {
     q.options.forEach((text, i) => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'option';
       btn.innerHTML = `<span class="option__key">${LETTERS[i]}</span><span class="option__text"></span>`;
       btn.querySelector('.option__text').textContent = text;
-      btn.addEventListener('click', () => selectOption(i, btn));
+      btn.addEventListener('click', () => {
+        setAnswer(i, true);
+        el.qOptions.querySelectorAll('.option').forEach((o) => o.classList.remove('is-selected'));
+        btn.classList.add('is-selected');
+      });
       el.qOptions.appendChild(btn);
     });
-
-    el.btnNext.disabled = true;
-    el.btnNext.textContent = session.isLast() ? 'Auswerten' : 'Weiter';
   }
 
-  function selectOption(i, btn) {
-    state.selectedIndex = i;
-    el.qOptions.querySelectorAll('.option').forEach((o) => o.classList.remove('is-selected'));
-    btn.classList.add('is-selected');
-    el.btnNext.disabled = false;
+  function renderTrueFalse(q) {
+    [['Wahr', true], ['Falsch', false]].forEach(([label, val]) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `option option--tf option--tf-${val ? 'yes' : 'no'}`;
+      btn.innerHTML = `<span class="option__key">${val ? '✓' : '✕'}</span><span class="option__text">${label}</span>`;
+      btn.addEventListener('click', () => {
+        setAnswer(val, true);
+        el.qOptions.querySelectorAll('.option').forEach((o) => o.classList.remove('is-selected'));
+        btn.classList.add('is-selected');
+      });
+      el.qOptions.appendChild(btn);
+    });
+  }
+
+  function renderOrder(q) {
+    let arr = [...q.start];
+    const hint = document.createElement('p');
+    hint.className = 'q-prompt';
+    hint.textContent = q.prompt;
+    el.qOptions.appendChild(hint);
+
+    const list = document.createElement('div');
+    list.className = 'order-list';
+    el.qOptions.appendChild(list);
+
+    const draw = () => {
+      list.innerHTML = '';
+      arr.forEach((text, i) => {
+        const row = document.createElement('div');
+        row.className = 'order-item';
+        row.innerHTML = `
+          <span class="order-item__pos">${i + 1}</span>
+          <span class="order-item__text"></span>
+          <span class="order-item__moves">
+            <button type="button" class="move-btn" data-dir="up" aria-label="nach oben" ${i === 0 ? 'disabled' : ''}>▲</button>
+            <button type="button" class="move-btn" data-dir="down" aria-label="nach unten" ${i === arr.length - 1 ? 'disabled' : ''}>▼</button>
+          </span>`;
+        row.querySelector('.order-item__text').textContent = text;
+        row.querySelector('[data-dir="up"]').addEventListener('click', () => move(i, -1));
+        row.querySelector('[data-dir="down"]').addEventListener('click', () => move(i, 1));
+        list.appendChild(row);
+      });
+    };
+    const move = (i, dir) => {
+      const j = i + dir;
+      if (j < 0 || j >= arr.length) return;
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+      setAnswer([...arr], true);
+      draw();
+    };
+
+    draw();
+    // Reihenfolge gilt sofort als (vorläufige) Antwort.
+    setAnswer([...arr], true);
+  }
+
+  function renderMatch(q) {
+    const hint = document.createElement('p');
+    hint.className = 'q-prompt';
+    hint.textContent = q.prompt;
+    el.qOptions.appendChild(hint);
+
+    const selected = new Array(q.lefts.length).fill(null);
+    const grid = document.createElement('div');
+    grid.className = 'match-list';
+    el.qOptions.appendChild(grid);
+
+    q.lefts.forEach((left, i) => {
+      const row = document.createElement('div');
+      row.className = 'match-row';
+      const sel = document.createElement('select');
+      sel.className = 'form__input form__input--compact match-select';
+      sel.innerHTML = '<option value="" disabled selected>auswählen …</option>';
+      q.rights.forEach((right) => {
+        const opt = document.createElement('option');
+        opt.value = right; opt.textContent = right;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener('change', () => {
+        selected[i] = sel.value;
+        const complete = selected.every((v) => v !== null);
+        setAnswer([...selected], complete);
+      });
+
+      const leftEl = document.createElement('span');
+      leftEl.className = 'match-row__left';
+      leftEl.textContent = left;
+
+      row.appendChild(leftEl);
+      row.appendChild(sel);
+      grid.appendChild(row);
+    });
   }
 
   function handleNext() {
-    if (state.selectedIndex === null) return;
+    if (!state.answerComplete) return;
     const session = state.session;
-    session.answer(state.selectedIndex, Date.now() - state.questionStart);
+    session.answer(state.currentAnswer, Date.now() - state.questionStart);
 
     if (session.isLast()) {
       finishQuiz();
@@ -203,10 +313,12 @@
       runId: state.runId,
       qId: d.id,
       level: d.level,
+      type: d.type,
       niederlassung: state.playerNdl,
       isCorrect: d.isCorrect,
-      chosenText: d.selectedIndex !== null ? d.options[d.selectedIndex] : null,
-      correctText: d.options[d.correctIndex],
+      answered: d.answered,
+      chosenText: d.chosenText,
+      correctText: d.correctText,
       date
     }));
   }
@@ -266,31 +378,84 @@
       });
   }
 
+  function reviewBodyMc(d) {
+    const rt = d.rt;
+    const answers = rt.options.map((text, i) => {
+      const isCorrect = i === rt.correctIndex;
+      const isSelected = i === d.value;
+      let cls = '', tag = '';
+      if (isCorrect) { cls = 'correct'; tag = '<span class="tag">Richtig</span>'; }
+      else if (isSelected) { cls = 'wrong'; tag = '<span class="tag">Deine Wahl</span>'; }
+      return `<li class="${cls}"><span>${escapeHtml(`${LETTERS[i]}. ${text}`)}</span>${tag}</li>`;
+    }).join('');
+    const none = !d.answered ? '<li class="wrong"><span>Keine Antwort ausgewählt</span></li>' : '';
+    return `<ul class="review-answers">${answers}${none}</ul>`;
+  }
+
+  function reviewBodyTrueFalse(d) {
+    const rt = d.rt;
+    const items = [['Wahr', true], ['Falsch', false]].map(([label, val]) => {
+      const isCorrect = val === rt.answer;
+      const isSelected = val === d.value;
+      let cls = '', tag = '';
+      if (isCorrect) { cls = 'correct'; tag = '<span class="tag">Richtig</span>'; }
+      else if (isSelected) { cls = 'wrong'; tag = '<span class="tag">Deine Wahl</span>'; }
+      return `<li class="${cls}"><span>${escapeHtml(label)}</span>${tag}</li>`;
+    }).join('');
+    return `<ul class="review-answers">${items}</ul>`;
+  }
+
+  function reviewBodyOrder(d) {
+    const rt = d.rt;
+    const user = Array.isArray(d.value) ? d.value : [];
+    const mine = rt.correct.map((_, i) => {
+      const text = user[i];
+      const ok = text === rt.correct[i];
+      return `<li class="${ok ? 'correct' : 'wrong'}"><span>${escapeHtml(`${i + 1}. ${text || '—'}`)}</span></li>`;
+    }).join('');
+    const right = rt.correct.map((text, i) =>
+      `<li class="correct"><span>${escapeHtml(`${i + 1}. ${text}`)}</span></li>`).join('');
+    return `
+      <div class="review-cols">
+        <div><p class="review-col-title">Deine Reihenfolge</p><ul class="review-answers">${mine}</ul></div>
+        <div><p class="review-col-title">Richtige Reihenfolge</p><ul class="review-answers">${right}</ul></div>
+      </div>`;
+  }
+
+  function reviewBodyMatch(d) {
+    const rt = d.rt;
+    const user = Array.isArray(d.value) ? d.value : [];
+    const rows = rt.lefts.map((left, i) => {
+      const chosen = user[i];
+      const correct = rt.correct[i];
+      const ok = chosen === correct;
+      const yourLine = `<span class="match-rev__pick ${ok ? 'correct' : 'wrong'}">${escapeHtml(chosen || '—')}</span>`;
+      const fix = ok ? '' : `<span class="match-rev__fix">→ ${escapeHtml(correct)}</span>`;
+      return `<li><span class="match-rev__left">${escapeHtml(left)}</span> ${yourLine} ${fix}</li>`;
+    }).join('');
+    return `<ul class="review-answers review-answers--match">${rows}</ul>`;
+  }
+
   function renderReview(details) {
     el.review.innerHTML = '';
     details.forEach((d, idx) => {
       const item = document.createElement('div');
       item.className = `review-item ${d.isCorrect ? 'is-correct' : 'is-wrong'}`;
 
-      const answers = d.options.map((text, i) => {
-        const isCorrect = i === d.correctIndex;
-        const isSelected = i === d.selectedIndex;
-        let cls = '';
-        let tag = '';
-        if (isCorrect) { cls = 'correct'; tag = '<span class="tag">Richtig</span>'; }
-        else if (isSelected) { cls = 'wrong'; tag = '<span class="tag">Deine Wahl</span>'; }
-        return `<li class="${cls}"><span>${escapeHtml(`${LETTERS[i]}. ${text}`)}</span>${tag}</li>`;
-      }).join('');
-
-      const notAnswered = d.selectedIndex === null
-        ? '<li class="wrong"><span>Keine Antwort ausgewählt</span></li>' : '';
+      let body;
+      switch (d.type) {
+        case 'truefalse': body = reviewBodyTrueFalse(d); break;
+        case 'order':     body = reviewBodyOrder(d); break;
+        case 'match':     body = reviewBodyMatch(d); break;
+        default:          body = reviewBodyMc(d);
+      }
 
       item.innerHTML = `
         <div class="review-item__head">
           <span class="review-item__num">${idx + 1}.</span>
           <p class="review-item__q"></p>
         </div>
-        <ul class="review-answers">${answers}${notAnswered}</ul>
+        ${body}
         <p class="review-item__exp"></p>`;
       item.querySelector('.review-item__q').textContent = d.q;
       item.querySelector('.review-item__exp').textContent = d.explanation;
@@ -470,6 +635,7 @@
       const wrongCount = row.total - row.correct;
       const wrongPct = row.total > 0 ? (wrongCount / row.total) * 100 : 0;
 
+      const hasDist = row.options.length > 0;
       const maxOpt = Math.max(1, ...row.options.map((o) => o.count));
       const optionsHtml = row.options.map((o, i) => {
         const w = Math.round((o.count / maxOpt) * 100);
@@ -482,11 +648,18 @@
           </div>`;
       }).join('');
 
+      const distHtml = hasDist ? `
+        <div class="q-item__dist" hidden>
+          <p class="q-item__dist-title">Antwortverteilung</p>
+          ${optionsHtml}
+        </div>` : '';
+
       item.innerHTML = `
-        <button type="button" class="q-item__head" aria-expanded="false">
+        <button type="button" class="q-item__head" aria-expanded="false" ${hasDist ? '' : 'data-nodist="1"'}>
           <span class="q-item__num badge" data-level="${row.level}">${LEVEL_LABEL[row.level]}</span>
+          <span class="q-item__type">${TYPE_LABEL[row.type] || ''}</span>
           <span class="q-item__text"></span>
-          <span class="q-item__rate">${row.total > 0 ? pct(row.correctRate) : '–'}</span>
+          <span class="q-item__rate">${pct(row.correctRate)}</span>
         </button>
         <div class="q-item__bar">
           <div class="stack stack--green" style="width:${correctPct}%"></div>
@@ -498,24 +671,22 @@
           ${row.unanswered ? `<span class="muted">${row.unanswered} ohne Antwort</span>` : ''}
           <span class="muted">${answered}/${row.total} beantwortet</span>
         </div>
-        <div class="q-item__dist" hidden>
-          <p class="q-item__dist-title">Antwortverteilung</p>
-          ${optionsHtml}
-        </div>`;
+        ${distHtml}`;
 
       item.querySelector('.q-item__text').textContent = row.q;
-      item.querySelectorAll('.dist-row__text').forEach((node, i) => {
-        node.textContent = row.options[i].text;
-      });
-
-      const head = item.querySelector('.q-item__head');
-      const dist = item.querySelector('.q-item__dist');
-      head.addEventListener('click', () => {
-        const open = dist.hidden;
-        dist.hidden = !open;
-        head.setAttribute('aria-expanded', String(open));
-        item.classList.toggle('is-open', open);
-      });
+      if (hasDist) {
+        item.querySelectorAll('.dist-row__text').forEach((node, i) => {
+          node.textContent = row.options[i].text;
+        });
+        const head = item.querySelector('.q-item__head');
+        const dist = item.querySelector('.q-item__dist');
+        head.addEventListener('click', () => {
+          const open = dist.hidden;
+          dist.hidden = !open;
+          head.setAttribute('aria-expanded', String(open));
+          item.classList.toggle('is-open', open);
+        });
+      }
 
       el.chartQuestions.appendChild(item);
     });
