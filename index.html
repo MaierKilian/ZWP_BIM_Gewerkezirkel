@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZWP BIM Quiz – Gewerkezirkel</title>
+  <meta name="description" content="Interaktives BIM-Quiz der ZWP Ingenieur-AG für den Gewerkezirkel.">
+  <link rel="icon" href="assets/zwp-logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <img src="assets/zwp-logo.svg" alt="ZWP Ingenieur-AG" class="logo">
+      <span class="app-header__tag">BIM Quiz · Gewerkezirkel</span>
+    </header>
+
+    <main class="app-main">
+
+      <!-- ================= START ================= -->
+      <section id="screen-start" class="screen is-active">
+        <div class="card card--center">
+          <h1 class="title">Willkommen zum <span class="accent">BIM&nbsp;Quiz</span></h1>
+          <p class="lead">
+            Teste dein Wissen rund um BIM, TGA und die Arbeitsweise bei ZWP.
+            15 Fragen, gemischte Schwierigkeit – am Ende landest du in der Bestenliste.
+          </p>
+
+          <form id="start-form" class="form" autocomplete="off">
+            <label class="form__label" for="player-name">Dein Name</label>
+            <input
+              id="player-name" class="form__input" type="text"
+              placeholder="z. B. Max Mustermann" maxlength="40" required>
+            <p id="name-error" class="form__error" role="alert" hidden>Bitte gib einen Namen ein.</p>
+            <button type="submit" class="btn btn--primary btn--block">Quiz starten</button>
+          </form>
+
+          <ul class="meta-list">
+            <li><strong>15</strong> Fragen</li>
+            <li><strong>Wertung</strong> richtige Antworten + Schnelligkeit</li>
+            <li><strong>Auflösung</strong> am Ende</li>
+          </ul>
+        </div>
+
+        <button id="show-leaderboard-start" class="link-btn" type="button">Bestenliste ansehen</button>
+      </section>
+
+      <!-- ================= QUIZ ================= -->
+      <section id="screen-quiz" class="screen">
+        <div class="card">
+          <div class="quiz-top">
+            <div class="quiz-progress">
+              <span id="q-counter" class="quiz-progress__counter">Frage 1 / 15</span>
+              <span id="q-level" class="badge">leicht</span>
+            </div>
+            <div id="q-timer" class="timer" aria-label="Verstrichene Zeit">00:00</div>
+          </div>
+
+          <div class="progressbar"><div id="progressbar-fill" class="progressbar__fill"></div></div>
+
+          <h2 id="q-text" class="question"></h2>
+          <div id="q-options" class="options"></div>
+
+          <div class="quiz-actions">
+            <button id="btn-next" class="btn btn--primary" type="button" disabled>Weiter</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= ERGEBNIS ================= -->
+      <section id="screen-result" class="screen">
+        <div class="card card--center">
+          <p id="result-rank-badge" class="rank-badge"></p>
+          <h2 class="title">Gut gemacht, <span id="result-name" class="accent"></span>!</h2>
+
+          <div class="score-grid">
+            <div class="score-box">
+              <span id="result-score" class="score-box__value">0</span>
+              <span class="score-box__label">Punkte</span>
+            </div>
+            <div class="score-box">
+              <span id="result-correct" class="score-box__value">0 / 15</span>
+              <span class="score-box__label">Richtig</span>
+            </div>
+            <div class="score-box">
+              <span id="result-time" class="score-box__value">00:00</span>
+              <span class="score-box__label">Zeit</span>
+            </div>
+          </div>
+
+          <div class="result-actions">
+            <button id="btn-show-leaderboard" class="btn btn--primary" type="button">Zur Bestenliste</button>
+            <button id="btn-toggle-review" class="btn btn--ghost" type="button">Auflösung anzeigen</button>
+            <button id="btn-restart-result" class="btn btn--ghost" type="button">Nochmal spielen</button>
+          </div>
+        </div>
+
+        <div id="review" class="review" hidden></div>
+      </section>
+
+      <!-- ================= BESTENLISTE ================= -->
+      <section id="screen-leaderboard" class="screen">
+        <div class="card">
+          <div class="leaderboard-head">
+            <h2 class="title">Bestenliste</h2>
+            <span class="muted">Top der Workshop-Besucher</span>
+          </div>
+          <ol id="leaderboard-list" class="leaderboard"></ol>
+          <p id="leaderboard-empty" class="muted leaderboard-empty" hidden>
+            Noch keine Einträge – sei die/der Erste!
+          </p>
+
+          <div class="leaderboard-actions">
+            <button id="btn-play-again" class="btn btn--primary" type="button">Quiz spielen</button>
+            <button id="btn-clear" class="btn btn--ghost btn--danger" type="button">Bestenliste zurücksetzen</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="app-footer">
+      <span>© ZWP Ingenieur-AG · BIM Gewerkezirkel</span>
+    </footer>
+  </div>
+
+  <script src="js/questions.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
