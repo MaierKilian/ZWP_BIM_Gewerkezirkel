@@ -1,6 +1,6 @@
 /**
- * App-Steuerung: Screen-Wechsel, Quiz-Ablauf, Rendering, Bestenliste.
- * Bindet questions.js, storage.js und quiz.js zusammen.
+ * App-Steuerung: Screen-Wechsel, Quiz-Ablauf, Bestenliste und Auswertung.
+ * Bindet config.js, questions.js, storage.js, quiz.js und analytics.js zusammen.
  */
 (() => {
   'use strict';
@@ -13,14 +13,18 @@
     start:       document.getElementById('screen-start'),
     quiz:        document.getElementById('screen-quiz'),
     result:      document.getElementById('screen-result'),
-    leaderboard: document.getElementById('screen-leaderboard')
+    leaderboard: document.getElementById('screen-leaderboard'),
+    analysis:    document.getElementById('screen-analysis')
   };
 
   const el = {
     startForm:        document.getElementById('start-form'),
     nameInput:        document.getElementById('player-name'),
     nameError:        document.getElementById('name-error'),
+    ndlSelect:        document.getElementById('player-ndl'),
+    ndlError:         document.getElementById('ndl-error'),
     showLbStart:      document.getElementById('show-leaderboard-start'),
+    showAnalysisStart:document.getElementById('show-analysis-start'),
 
     qCounter:         document.getElementById('q-counter'),
     qLevel:           document.getElementById('q-level'),
@@ -43,20 +47,36 @@
     lbList:           document.getElementById('leaderboard-list'),
     lbEmpty:          document.getElementById('leaderboard-empty'),
     btnPlayAgain:     document.getElementById('btn-play-again'),
-    btnClear:         document.getElementById('btn-clear')
+    btnShowAnalysis:  document.getElementById('btn-show-analysis'),
+    btnClear:         document.getElementById('btn-clear'),
+
+    ndlFilter:        document.getElementById('ndl-filter'),
+    analysisEmpty:    document.getElementById('analysis-empty'),
+    analysisContent:  document.getElementById('analysis-content'),
+    kpiGrid:          document.getElementById('kpi-grid'),
+    blockNdl:         document.getElementById('block-ndl'),
+    chartNdl:         document.getElementById('chart-ndl'),
+    chartQuestions:   document.getElementById('chart-questions'),
+    qSort:            document.getElementById('q-sort'),
+    btnAnalysisBack:  document.getElementById('btn-analysis-back'),
+    btnAnalysisPlay:  document.getElementById('btn-analysis-play')
   };
 
   // ---- Sitzungszustand ----
   const state = {
     playerName: '',
-    session: null,        // aktuelle Quiz.create()-Instanz
-    quizStart: 0,         // Zeitstempel Quizbeginn
-    questionStart: 0,     // Zeitstempel aktuelle Frage
-    selectedIndex: null,  // Auswahl der aktuellen Frage
-    lastResult: null,     // Ergebnisobjekt
-    lastRank: null,       // Platzierung des letzten Durchlaufs
-    lastEntryId: null,    // ID des eigenen Eintrags (Hervorhebung)
-    timerId: null
+    playerNdl: '',
+    runId: null,
+    session: null,
+    quizStart: 0,
+    questionStart: 0,
+    selectedIndex: null,
+    lastResult: null,
+    lastRank: null,
+    lastEntryId: null,
+    timerId: null,
+    analysisFilter: '',
+    analysisSort: 'hardest'
   };
 
   // ---- Helfer ----
@@ -73,8 +93,30 @@
     return `${m}:${s}`;
   }
 
-  function ordinal(n) {
-    return `${n}.`;
+  function pct(rate) { return `${Math.round(rate * 100)}%`; }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  // ---- Auswahllisten befuellen ----
+  function populateNiederlassungen() {
+    const list = window.NIEDERLASSUNGEN || [];
+    list.forEach((ndl) => {
+      const opt = document.createElement('option');
+      opt.value = ndl; opt.textContent = ndl;
+      el.ndlSelect.appendChild(opt);
+
+      const fOpt = document.createElement('option');
+      fOpt.value = ndl; fOpt.textContent = ndl;
+      el.ndlFilter.appendChild(fOpt);
+    });
   }
 
   // ---- Timer ----
@@ -89,10 +131,13 @@
   }
 
   // ---- Quizstart ----
-  function startQuiz(name) {
+  function startQuiz(name, ndl) {
     state.playerName = name;
+    state.playerNdl = ndl;
+    state.runId = uid();
     state.session = Quiz.create(window.QUESTIONS);
     state.quizStart = Date.now();
+    el.qTimer.textContent = '00:00';
     showScreen('quiz');
     startTimer();
     renderQuestion();
@@ -109,8 +154,7 @@
     el.qLevel.dataset.level = q.level;
     el.qText.textContent = q.q;
 
-    const pct = (session.index / session.total) * 100;
-    el.progressFill.style.width = `${pct}%`;
+    el.progressFill.style.width = `${(session.index / session.total) * 100}%`;
 
     el.qOptions.innerHTML = '';
     q.options.forEach((text, i) => {
@@ -148,6 +192,20 @@
   }
 
   // ---- Quizende ----
+  function buildResponseRecords(details) {
+    const date = new Date().toISOString();
+    return details.map((d) => ({
+      runId: state.runId,
+      qId: d.id,
+      level: d.level,
+      niederlassung: state.playerNdl,
+      isCorrect: d.isCorrect,
+      chosenText: d.selectedIndex !== null ? d.options[d.selectedIndex] : null,
+      correctText: d.options[d.correctIndex],
+      date
+    }));
+  }
+
   function finishQuiz() {
     stopTimer();
     el.progressFill.style.width = '100%';
@@ -155,13 +213,17 @@
     const result = state.session.result(totalTime);
     state.lastResult = result;
 
-    Storage.saveScore({
-      name: state.playerName,
-      score: result.score,
-      correct: result.correct,
-      total: result.total,
-      timeMs: result.timeMs
-    }).then(({ entry, rank }) => {
+    Promise.all([
+      Storage.saveScore({
+        name: state.playerName,
+        niederlassung: state.playerNdl,
+        score: result.score,
+        correct: result.correct,
+        total: result.total,
+        timeMs: result.timeMs
+      }),
+      Storage.saveResponses(buildResponseRecords(result.details))
+    ]).then(([{ entry, rank }]) => {
       state.lastRank = rank;
       state.lastEntryId = entry.id;
       renderResult();
@@ -172,7 +234,7 @@
   function renderResult() {
     const r = state.lastResult;
     el.resultName.textContent = state.playerName;
-    el.resultRankBadge.textContent = `Platz ${ordinal(state.lastRank)} in der Bestenliste`;
+    el.resultRankBadge.textContent = `Platz ${state.lastRank}. · ${state.playerNdl}`;
     el.resultScore.textContent = r.score.toLocaleString('de-DE');
     el.resultCorrect.textContent = `${r.correct} / ${r.total}`;
     el.resultTime.textContent = formatTime(r.timeMs);
@@ -195,8 +257,7 @@
         let tag = '';
         if (isCorrect) { cls = 'correct'; tag = '<span class="tag">Richtig</span>'; }
         else if (isSelected) { cls = 'wrong'; tag = '<span class="tag">Deine Wahl</span>'; }
-        const label = `${LETTERS[i]}. `;
-        return `<li class="${cls}"><span>${escapeHtml(label + text)}</span>${tag}</li>`;
+        return `<li class="${cls}"><span>${escapeHtml(`${LETTERS[i]}. ${text}`)}</span>${tag}</li>`;
       }).join('');
 
       const notAnswered = d.selectedIndex === null
@@ -213,12 +274,6 @@
       item.querySelector('.review-item__exp').textContent = d.explanation;
       el.review.appendChild(item);
     });
-  }
-
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
   }
 
   // ---- Bestenliste ----
@@ -241,13 +296,17 @@
           <span class="lb-rank">${rank <= 3 ? medal(rank) : rank}</span>
           <span class="lb-name">
             <span class="lb-name__text"></span>
-            <span class="lb-sub">${entry.correct}/${entry.total} richtig · ${formatTime(entry.timeMs)} · ${dateStr}</span>
+            <span class="lb-sub">
+              <span class="ndl-chip"></span>
+              ${entry.correct}/${entry.total} richtig · ${formatTime(entry.timeMs)} · ${dateStr}
+            </span>
           </span>
           <span class="lb-score">
             <span class="lb-score__value">${Number(entry.score).toLocaleString('de-DE')}</span>
             <span class="lb-score__unit">Punkte</span>
           </span>`;
         li.querySelector('.lb-name__text').textContent = entry.name;
+        li.querySelector('.ndl-chip').textContent = entry.niederlassung || '—';
         el.lbList.appendChild(li);
       });
     });
@@ -257,32 +316,175 @@
     return { 1: '🥇', 2: '🥈', 3: '🥉' }[rank] || rank;
   }
 
+  // ---- Auswertung / Analyse ----
+  function openAnalysis() {
+    Promise.all([Storage.getResponses(), Storage.getLeaderboard()])
+      .then(([responses, leaderboard]) => {
+        const hasData = responses.length > 0;
+        el.analysisEmpty.hidden = hasData;
+        el.analysisContent.hidden = !hasData;
+        if (hasData) {
+          const data = Analytics.compute(responses, leaderboard, window.QUESTIONS, state.analysisFilter);
+          renderAnalysis(data);
+        }
+        showScreen('analysis');
+      });
+  }
+
+  function refreshAnalysis() {
+    Promise.all([Storage.getResponses(), Storage.getLeaderboard()])
+      .then(([responses, leaderboard]) => {
+        const data = Analytics.compute(responses, leaderboard, window.QUESTIONS, state.analysisFilter);
+        renderAnalysis(data);
+      });
+  }
+
+  function renderAnalysis(data) {
+    renderKpis(data.kpis);
+    renderNdlChart(data.byNiederlassung);
+    renderQuestionsChart(data.byQuestion);
+  }
+
+  function renderKpis(k) {
+    const cards = [
+      { value: k.plays, label: 'Teilnahmen' },
+      { value: pct(k.correctRate), label: 'Trefferquote' },
+      { value: k.avgScore.toLocaleString('de-DE'), label: 'Ø Punkte' },
+      { value: k.answers.toLocaleString('de-DE'), label: 'Antworten gesamt' }
+    ];
+    el.kpiGrid.innerHTML = cards.map((c) => `
+      <div class="kpi">
+        <span class="kpi__value">${c.value}</span>
+        <span class="kpi__label">${c.label}</span>
+      </div>`).join('');
+  }
+
+  function renderNdlChart(rows) {
+    // Beim Filtern auf eine Niederlassung ist der Vergleich wenig sinnvoll – ausblenden.
+    if (state.analysisFilter) { el.blockNdl.hidden = true; return; }
+    el.blockNdl.hidden = false;
+
+    if (rows.length === 0) {
+      el.chartNdl.innerHTML = '<p class="muted">Noch keine Daten.</p>';
+      return;
+    }
+
+    el.chartNdl.innerHTML = rows.map((row) => `
+      <div class="bar-row">
+        <span class="bar-row__label"></span>
+        <div class="bar-row__track">
+          <div class="bar-row__fill" style="width:${Math.round(row.correctRate * 100)}%"></div>
+          <span class="bar-row__value">${pct(row.correctRate)}</span>
+        </div>
+        <span class="bar-row__meta">${row.avgScore.toLocaleString('de-DE')} P · ${row.plays}×</span>
+      </div>`).join('');
+
+    // Labels per textContent (sicher) nachtragen
+    el.chartNdl.querySelectorAll('.bar-row__label').forEach((node, i) => {
+      node.textContent = rows[i].ndl;
+    });
+  }
+
+  function renderQuestionsChart(rows) {
+    // Nur Fragen mit mindestens einer Antwort zeigen (sonst verfaelscht "0 %" die Sortierung).
+    const sorted = rows.filter((r) => r.total > 0);
+    if (sorted.length === 0) {
+      el.chartQuestions.innerHTML = '<p class="muted">Für diese Auswahl liegen noch keine beantworteten Fragen vor.</p>';
+      return;
+    }
+    if (state.analysisSort === 'hardest') {
+      // Schwerste zuerst: niedrigste Trefferquote oben; bei Gleichstand mehr Antworten zuerst.
+      sorted.sort((a, b) => a.correctRate - b.correctRate || b.total - a.total);
+    } else {
+      sorted.sort((a, b) => a.qId - b.qId);
+    }
+
+    el.chartQuestions.innerHTML = '';
+    sorted.forEach((row) => {
+      const item = document.createElement('div');
+      item.className = 'q-item';
+
+      const answered = row.total - row.unanswered;
+      const correctPct = row.total > 0 ? (row.correct / row.total) * 100 : 0;
+      const wrongCount = row.total - row.correct;
+      const wrongPct = row.total > 0 ? (wrongCount / row.total) * 100 : 0;
+
+      const maxOpt = Math.max(1, ...row.options.map((o) => o.count));
+      const optionsHtml = row.options.map((o, i) => {
+        const w = Math.round((o.count / maxOpt) * 100);
+        return `
+          <div class="dist-row ${o.isCorrect ? 'is-correct' : ''}">
+            <span class="dist-row__key">${LETTERS[i]}</span>
+            <span class="dist-row__text"></span>
+            <div class="dist-row__track"><div class="dist-row__fill" style="width:${w}%"></div></div>
+            <span class="dist-row__count">${o.count}×</span>
+          </div>`;
+      }).join('');
+
+      item.innerHTML = `
+        <button type="button" class="q-item__head" aria-expanded="false">
+          <span class="q-item__num badge" data-level="${row.level}">${LEVEL_LABEL[row.level]}</span>
+          <span class="q-item__text"></span>
+          <span class="q-item__rate">${row.total > 0 ? pct(row.correctRate) : '–'}</span>
+        </button>
+        <div class="q-item__bar">
+          <div class="stack stack--green" style="width:${correctPct}%"></div>
+          <div class="stack stack--red" style="width:${wrongPct}%"></div>
+        </div>
+        <div class="q-item__legend">
+          <span class="ok">${row.correct} richtig</span>
+          <span class="no">${wrongCount} falsch</span>
+          ${row.unanswered ? `<span class="muted">${row.unanswered} ohne Antwort</span>` : ''}
+          <span class="muted">${answered}/${row.total} beantwortet</span>
+        </div>
+        <div class="q-item__dist" hidden>
+          <p class="q-item__dist-title">Antwortverteilung</p>
+          ${optionsHtml}
+        </div>`;
+
+      item.querySelector('.q-item__text').textContent = row.q;
+      item.querySelectorAll('.dist-row__text').forEach((node, i) => {
+        node.textContent = row.options[i].text;
+      });
+
+      const head = item.querySelector('.q-item__head');
+      const dist = item.querySelector('.q-item__dist');
+      head.addEventListener('click', () => {
+        const open = dist.hidden;
+        dist.hidden = !open;
+        head.setAttribute('aria-expanded', String(open));
+        item.classList.toggle('is-open', open);
+      });
+
+      el.chartQuestions.appendChild(item);
+    });
+  }
+
   // ---- Events ----
   el.startForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const name = el.nameInput.value.trim();
-    if (!name) {
-      el.nameError.hidden = false;
-      el.nameInput.focus();
-      return;
-    }
+    const ndl = el.ndlSelect.value;
+    let ok = true;
+    if (!name) { el.nameError.hidden = false; ok = false; }
+    if (!ndl) { el.ndlError.hidden = false; ok = false; }
+    if (!ok) { (!name ? el.nameInput : el.ndlSelect).focus(); return; }
     el.nameError.hidden = true;
-    startQuiz(name);
+    el.ndlError.hidden = true;
+    startQuiz(name, ndl);
   });
 
   el.nameInput.addEventListener('input', () => { el.nameError.hidden = true; });
+  el.ndlSelect.addEventListener('change', () => { el.ndlError.hidden = true; });
 
   el.btnNext.addEventListener('click', handleNext);
 
-  el.showLbStart.addEventListener('click', () => {
-    renderLeaderboard();
-    showScreen('leaderboard');
-  });
+  function gotoLeaderboard() { renderLeaderboard(); showScreen('leaderboard'); }
+  el.showLbStart.addEventListener('click', gotoLeaderboard);
+  el.btnShowLb.addEventListener('click', gotoLeaderboard);
 
-  el.btnShowLb.addEventListener('click', () => {
-    renderLeaderboard();
-    showScreen('leaderboard');
-  });
+  el.showAnalysisStart.addEventListener('click', openAnalysis);
+  el.btnShowAnalysis.addEventListener('click', openAnalysis);
 
   el.btnToggleReview.addEventListener('click', () => {
     const willShow = el.review.hidden;
@@ -297,19 +499,36 @@
     showScreen('start');
     el.nameInput.focus();
   }
-
   el.btnRestartResult.addEventListener('click', resetToStart);
   el.btnPlayAgain.addEventListener('click', resetToStart);
+  el.btnAnalysisPlay.addEventListener('click', resetToStart);
+  el.btnAnalysisBack.addEventListener('click', gotoLeaderboard);
+
+  el.ndlFilter.addEventListener('change', () => {
+    state.analysisFilter = el.ndlFilter.value;
+    refreshAnalysis();
+  });
+
+  el.qSort.addEventListener('click', (e) => {
+    const btn = e.target.closest('.seg__btn');
+    if (!btn) return;
+    state.analysisSort = btn.dataset.sort;
+    el.qSort.querySelectorAll('.seg__btn').forEach((b) => b.classList.toggle('is-active', b === btn));
+    refreshAnalysis();
+  });
 
   el.btnClear.addEventListener('click', () => {
-    const ok = window.confirm('Bestenliste wirklich komplett zurücksetzen? Das kann nicht rückgängig gemacht werden.');
+    const ok = window.confirm(
+      'Wirklich ALLE Daten zurücksetzen (Bestenliste und Auswertung)?\nDas kann nicht rückgängig gemacht werden.'
+    );
     if (!ok) return;
-    Storage.clearLeaderboard().then(() => {
+    Storage.clearAll().then(() => {
       state.lastEntryId = null;
       renderLeaderboard();
     });
   });
 
-  // Startbildschirm fokussieren
+  // ---- Init ----
+  populateNiederlassungen();
   el.nameInput.focus();
 })();

@@ -32,6 +32,13 @@
               id="player-name" class="form__input" type="text"
               placeholder="z. B. Max Mustermann" maxlength="40" required>
             <p id="name-error" class="form__error" role="alert" hidden>Bitte gib einen Namen ein.</p>
+
+            <label class="form__label" for="player-ndl">Deine Niederlassung</label>
+            <select id="player-ndl" class="form__input" required>
+              <option value="" disabled selected>Bitte auswählen …</option>
+            </select>
+            <p id="ndl-error" class="form__error" role="alert" hidden>Bitte wähle deine Niederlassung.</p>
+
             <button type="submit" class="btn btn--primary btn--block">Quiz starten</button>
           </form>
 
@@ -42,7 +49,10 @@
           </ul>
         </div>
 
-        <button id="show-leaderboard-start" class="link-btn" type="button">Bestenliste ansehen</button>
+        <div class="start-links">
+          <button id="show-leaderboard-start" class="link-btn" type="button">Bestenliste ansehen</button>
+          <button id="show-analysis-start" class="link-btn" type="button">Auswertung &amp; Statistik</button>
+        </div>
       </section>
 
       <!-- ================= QUIZ ================= -->
@@ -112,7 +122,64 @@
 
           <div class="leaderboard-actions">
             <button id="btn-play-again" class="btn btn--primary" type="button">Quiz spielen</button>
-            <button id="btn-clear" class="btn btn--ghost btn--danger" type="button">Bestenliste zurücksetzen</button>
+            <button id="btn-show-analysis" class="btn btn--ghost" type="button">Auswertung &amp; Statistik</button>
+            <button id="btn-clear" class="btn btn--ghost btn--danger" type="button">Daten zurücksetzen</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= AUSWERTUNG / ANALYSE ================= -->
+      <section id="screen-analysis" class="screen">
+        <div class="card">
+          <div class="analysis-head">
+            <div>
+              <h2 class="title">Auswertung &amp; Statistik</h2>
+              <span class="muted">Antworten anonym ausgewertet – nach Niederlassung filterbar</span>
+            </div>
+            <div class="analysis-filter">
+              <label for="ndl-filter" class="form__label">Niederlassung</label>
+              <select id="ndl-filter" class="form__input form__input--compact">
+                <option value="">Alle Niederlassungen</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="analysis-empty" class="muted leaderboard-empty" hidden>
+            Noch keine Daten – sobald jemand das Quiz gespielt hat, erscheint hier die Auswertung.
+          </div>
+
+          <div id="analysis-content">
+            <!-- KPIs -->
+            <div id="kpi-grid" class="kpi-grid"></div>
+
+            <!-- Niederlassungs-Vergleich -->
+            <div class="analysis-block" id="block-ndl">
+              <h3 class="analysis-block__title">Niederlassungen im Vergleich</h3>
+              <p class="analysis-block__hint">Trefferquote (Balken) · Schnitt-Punkte &amp; Teilnahmen rechts</p>
+              <div id="chart-ndl" class="chart"></div>
+            </div>
+
+            <!-- Fragen-Analyse -->
+            <div class="analysis-block">
+              <div class="analysis-block__head">
+                <h3 class="analysis-block__title">Antworten je Frage</h3>
+                <div class="seg" id="q-sort">
+                  <button type="button" class="seg__btn is-active" data-sort="hardest">Schwerste zuerst</button>
+                  <button type="button" class="seg__btn" data-sort="order">Reihenfolge</button>
+                </div>
+              </div>
+              <p class="analysis-block__hint">
+                <span class="legend"><span class="legend__dot legend__dot--green"></span>richtig</span>
+                <span class="legend"><span class="legend__dot legend__dot--red"></span>falsch</span>
+                · Klick auf eine Frage zeigt die Antwortverteilung
+              </p>
+              <div id="chart-questions" class="q-analysis"></div>
+            </div>
+          </div>
+
+          <div class="leaderboard-actions">
+            <button id="btn-analysis-back" class="btn btn--primary" type="button">Zur Bestenliste</button>
+            <button id="btn-analysis-play" class="btn btn--ghost" type="button">Quiz spielen</button>
           </div>
         </div>
       </section>
@@ -124,9 +191,11 @@
     </footer>
   </div>
 
+  <script src="js/config.js"></script>
   <script src="js/questions.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/quiz.js"></script>
+  <script src="js/analytics.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

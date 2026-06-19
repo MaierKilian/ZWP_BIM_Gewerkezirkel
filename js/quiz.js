@@ -112,6 +112,7 @@ const Quiz = (() => {
           score += BASE_POINTS[q.level] + timeBonus(a.answerMs);
         }
         return {
+          id: q.id,
           q: q.q,
           level: q.level,
           options: q.options,
