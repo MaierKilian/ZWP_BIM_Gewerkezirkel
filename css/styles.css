@@ -576,7 +576,7 @@ select.form__input {
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 28px;
 }
@@ -603,6 +603,34 @@ select.form__input {
 }
 .analysis-block__title { font-size: 1.05rem; font-weight: 700; margin: 0 0 4px; }
 .analysis-block__hint { font-size: 0.82rem; color: var(--muted); margin: 0 0 16px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+/* Zwei-Spalten-Layout in Analyse-Blöcken */
+.split-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.mini-title { font-size: 0.8rem; font-weight: 700; color: var(--ink-soft); margin: 0 0 10px; }
+
+/* Mini-Balken (Schwierigkeit / Typ) */
+.chart--mini { gap: 10px; }
+.mbar { display: grid; grid-template-columns: 92px 1fr auto; align-items: center; gap: 10px; }
+.mbar__label { font-size: 0.86rem; font-weight: 600; }
+.mbar__track { background: var(--bg); border-radius: 999px; height: 14px; overflow: hidden; }
+.mbar__fill { height: 100%; background: var(--zwp-blue); border-radius: 999px; min-width: 2px; transition: width 0.4s ease; }
+.mbar__val { font-size: 0.8rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Auffälligkeiten (Top/Flop) */
+.highlight-card { background: var(--zwp-blue-tint); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 16px; }
+.highlight-card--flop { background: var(--red-soft); border-color: #f3d2cf; }
+.highlight-card--top { background: var(--green-soft); border-color: #cde9d8; }
+.highlight-card .mini-title { color: var(--ink); }
+.highlight-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.highlight-list li { display: flex; gap: 10px; align-items: baseline; font-size: 0.88rem; }
+.highlight-rate { flex: none; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 42px; }
+.highlight-card--flop .highlight-rate { color: var(--red); }
+.highlight-card--top .highlight-rate { color: var(--green); }
+.highlight-q { color: var(--ink-soft); line-height: 1.35; }
+
+/* Export */
+.analysis-export { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-top: 16px; border-top: 1px solid var(--line); margin-bottom: 0; }
+.analysis-export .link-btn { margin: 0; }
 
 .legend { display: inline-flex; align-items: center; gap: 6px; }
 .legend__dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
@@ -715,4 +743,7 @@ select.form__input {
   .match-row { grid-template-columns: 1fr; gap: 6px; }
   .review-cols { grid-template-columns: 1fr; }
   .q-item__type { display: none; }
+
+  .split-2 { grid-template-columns: 1fr; gap: 16px; }
+  .mbar { grid-template-columns: 76px 1fr auto; }
 }

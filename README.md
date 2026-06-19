@@ -24,10 +24,13 @@ und die Arbeitsweise bei ZWP und landen anschließend in einer Bestenliste.
 - **Ergebnis-Screen** zeigt zusätzlich den aktuellen Rang der eigenen Niederlassung
 - **Auswertung & Statistik** (anonym):
   - Filter nach Niederlassung
-  - KPIs: Teilnahmen, Trefferquote, Ø Punkte, Antworten gesamt
-  - Diagramm „Niederlassungen im Vergleich" (Trefferquote, Ø Punkte, Teilnahmen)
+  - KPIs: Teilnahmen, Teilnehmende, Trefferquote, Ø Punkte, Bestwert, Ø Dauer
+  - Leistung nach **Schwierigkeit** und **Fragetyp** (Trefferquote je Gruppe)
+  - **Auffälligkeiten**: schwerste & sicherste Fragen auf einen Blick
+  - Diagramm „Niederlassungen im Vergleich" (umschaltbar Trefferquote / Ø Punkte)
   - Diagramm „Antworten je Frage" (richtig/falsch je Frage, schwerste zuerst)
   - aufklappbare Antwortverteilung je Frage (welche Option wie oft gewählt wurde)
+  - **CSV-Export** der Teilnahmen und der Einzelantworten (für externe Analyse/Excel)
 - ZWP-Design: helles Blau dezent als Akzent, viel Weiß – clean & professionell
 - Charts ohne externe Abhängigkeit (reines CSS/SVG, funktioniert offline am Kiosk)
 - Responsive für Laptop und Tablet

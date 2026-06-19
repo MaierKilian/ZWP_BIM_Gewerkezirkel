@@ -59,10 +59,18 @@
     analysisEmpty:    document.getElementById('analysis-empty'),
     analysisContent:  document.getElementById('analysis-content'),
     kpiGrid:          document.getElementById('kpi-grid'),
+    chartLevel:       document.getElementById('chart-level'),
+    chartType:        document.getElementById('chart-type'),
+    blockHighlights:  document.getElementById('block-highlights'),
+    listFlop:         document.getElementById('list-flop'),
+    listTop:          document.getElementById('list-top'),
     blockNdl:         document.getElementById('block-ndl'),
+    ndlMetric:        document.getElementById('ndl-metric'),
     chartNdl:         document.getElementById('chart-ndl'),
     chartQuestions:   document.getElementById('chart-questions'),
     qSort:            document.getElementById('q-sort'),
+    btnExportPlays:   document.getElementById('btn-export-plays'),
+    btnExportAnswers: document.getElementById('btn-export-answers'),
     btnAnalysisBack:  document.getElementById('btn-analysis-back'),
     btnAnalysisPlay:  document.getElementById('btn-analysis-play')
   };
@@ -83,6 +91,8 @@
     timerId: null,
     analysisFilter: '',
     analysisSort: 'hardest',
+    ndlMetric: 'rate',
+    lastAnalysis: null,
     lbMode: 'players'
   };
 
@@ -566,7 +576,10 @@
   }
 
   function renderAnalysis(data) {
+    state.lastAnalysis = data;
     renderKpis(data.kpis);
+    renderBreakdown(data);
+    renderHighlights(data.byQuestion);
     renderNdlChart(data.byNiederlassung);
     renderQuestionsChart(data.byQuestion);
   }
@@ -574,15 +587,57 @@
   function renderKpis(k) {
     const cards = [
       { value: k.plays, label: 'Teilnahmen' },
+      { value: k.players, label: 'Teilnehmende' },
       { value: pct(k.correctRate), label: 'Trefferquote' },
       { value: k.avgScore.toLocaleString('de-DE'), label: 'Ø Punkte' },
-      { value: k.answers.toLocaleString('de-DE'), label: 'Antworten gesamt' }
+      { value: k.bestScore.toLocaleString('de-DE'), label: 'Bestwert' },
+      { value: k.avgTimeMs ? formatTime(k.avgTimeMs) : '–', label: 'Ø Dauer' }
     ];
     el.kpiGrid.innerHTML = cards.map((c) => `
       <div class="kpi">
         <span class="kpi__value">${c.value}</span>
         <span class="kpi__label">${c.label}</span>
       </div>`).join('');
+  }
+
+  // Mini-Balkendiagramm (Label + Trefferquote) für Schwierigkeit/Typ
+  function miniBars(container, rows, labelFn) {
+    if (rows.length === 0) { container.innerHTML = '<p class="muted">Keine Daten.</p>'; return; }
+    container.innerHTML = rows.map((r) => `
+      <div class="mbar">
+        <span class="mbar__label"></span>
+        <div class="mbar__track"><div class="mbar__fill" style="width:${Math.round(r.correctRate * 100)}%"></div></div>
+        <span class="mbar__val">${pct(r.correctRate)} <span class="muted">(${r.correct}/${r.total})</span></span>
+      </div>`).join('');
+    container.querySelectorAll('.mbar__label').forEach((node, i) => {
+      node.textContent = labelFn(rows[i].key);
+    });
+  }
+
+  function renderBreakdown(data) {
+    miniBars(el.chartLevel, data.byLevel, (k) => LEVEL_LABEL[k] || k);
+    miniBars(el.chartType, data.byType, (k) => TYPE_LABEL[k] || k);
+  }
+
+  function renderHighlights(byQuestion) {
+    const answered = byQuestion.filter((q) => q.total > 0);
+    if (answered.length === 0) { el.blockHighlights.hidden = true; return; }
+    el.blockHighlights.hidden = false;
+
+    const flop = [...answered].sort((a, b) => a.correctRate - b.correctRate || b.total - a.total).slice(0, 3);
+    const top = [...answered].sort((a, b) => b.correctRate - a.correctRate || b.total - a.total).slice(0, 3);
+
+    const fill = (listEl, rows) => {
+      listEl.innerHTML = '';
+      rows.forEach((r) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="highlight-rate">${pct(r.correctRate)}</span><span class="highlight-q"></span>`;
+        li.querySelector('.highlight-q').textContent = r.q;
+        listEl.appendChild(li);
+      });
+    };
+    fill(el.listFlop, flop);
+    fill(el.listTop, top);
   }
 
   function renderNdlChart(rows) {
@@ -595,19 +650,28 @@
       return;
     }
 
-    el.chartNdl.innerHTML = rows.map((row) => `
-      <div class="bar-row">
-        <span class="bar-row__label"></span>
-        <div class="bar-row__track">
-          <div class="bar-row__fill" style="width:${Math.round(row.correctRate * 100)}%"></div>
-          <span class="bar-row__value">${pct(row.correctRate)}</span>
-        </div>
-        <span class="bar-row__meta">${row.avgScore.toLocaleString('de-DE')} P · ${row.plays}×</span>
-      </div>`).join('');
+    const byScore = state.ndlMetric === 'score';
+    const maxScore = Math.max(1, ...rows.map((r) => r.avgScore));
+    // Reihen nach gewählter Kennzahl sortieren
+    const sorted = [...rows].sort((a, b) =>
+      byScore ? (b.avgScore - a.avgScore) : (b.correctRate - a.correctRate));
 
-    // Labels per textContent (sicher) nachtragen
+    el.chartNdl.innerHTML = sorted.map((row) => {
+      const width = byScore ? Math.round((row.avgScore / maxScore) * 100) : Math.round(row.correctRate * 100);
+      const value = byScore ? `${row.avgScore.toLocaleString('de-DE')} P` : pct(row.correctRate);
+      return `
+        <div class="bar-row">
+          <span class="bar-row__label"></span>
+          <div class="bar-row__track">
+            <div class="bar-row__fill" style="width:${width}%"></div>
+            <span class="bar-row__value">${value}</span>
+          </div>
+          <span class="bar-row__meta">${pct(row.correctRate)} · ${row.avgScore.toLocaleString('de-DE')} P · ${row.plays}×</span>
+        </div>`;
+    }).join('');
+
     el.chartNdl.querySelectorAll('.bar-row__label').forEach((node, i) => {
-      node.textContent = rows[i].ndl;
+      node.textContent = sorted[i].ndl;
     });
   }
 
@@ -692,6 +756,67 @@
     });
   }
 
+  // ---- CSV-Export ----
+  function toCsv(headers, rows) {
+    const esc = (v) => {
+      const s = (v === null || v === undefined) ? '' : String(v);
+      return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [headers.join(';'), ...rows.map((r) => r.map(esc).join(';'))];
+    return '﻿' + lines.join('\r\n'); // BOM für Excel/Umlaute
+  }
+
+  function downloadCsv(filename, content) {
+    try {
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      console.warn('Export fehlgeschlagen:', err);
+      window.alert('Export wird in diesem Browser nicht unterstützt.');
+    }
+  }
+
+  function dateStamp() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function exportPlays() {
+    Storage.getLeaderboard().then((entries) => {
+      if (entries.length === 0) { window.alert('Noch keine Daten zum Exportieren.'); return; }
+      const headers = ['Platz', 'Name', 'Niederlassung', 'Punkte', 'Richtig', 'Gesamt', 'Dauer_Sek', 'Datum'];
+      const rows = entries.map((e, i) => [
+        i + 1, e.name, e.niederlassung, e.score, e.correct, e.total,
+        Math.round((e.timeMs || 0) / 1000),
+        new Date(e.date).toLocaleString('de-DE')
+      ]);
+      downloadCsv(`zwp-bim-quiz_teilnahmen_${dateStamp()}.csv`, toCsv(headers, rows));
+    });
+  }
+
+  function exportAnswers() {
+    Storage.getResponses().then((responses) => {
+      if (responses.length === 0) { window.alert('Noch keine Daten zum Exportieren.'); return; }
+      const byId = {};
+      (window.QUESTIONS || []).forEach((q) => { byId[q.id] = q; });
+      const headers = ['Frage_ID', 'Niederlassung', 'Schwierigkeit', 'Typ', 'Richtig', 'Gewählte_Antwort', 'Richtige_Antwort', 'Frage', 'Datum'];
+      const rows = responses.map((r) => [
+        r.qId, r.niederlassung, r.level, r.type || 'mc',
+        r.isCorrect ? 'ja' : 'nein',
+        r.chosenText || '', r.correctText || '',
+        byId[r.qId] ? byId[r.qId].q : '',
+        new Date(r.date).toLocaleString('de-DE')
+      ]);
+      downloadCsv(`zwp-bim-quiz_antworten_${dateStamp()}.csv`, toCsv(headers, rows));
+    });
+  }
+
   // ---- Events ----
   el.startForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -754,8 +879,19 @@
     if (!btn) return;
     state.analysisSort = btn.dataset.sort;
     el.qSort.querySelectorAll('.seg__btn').forEach((b) => b.classList.toggle('is-active', b === btn));
-    refreshAnalysis();
+    if (state.lastAnalysis) renderQuestionsChart(state.lastAnalysis.byQuestion);
   });
+
+  el.ndlMetric.addEventListener('click', (e) => {
+    const btn = e.target.closest('.seg__btn');
+    if (!btn) return;
+    state.ndlMetric = btn.dataset.metric;
+    el.ndlMetric.querySelectorAll('.seg__btn').forEach((b) => b.classList.toggle('is-active', b === btn));
+    if (state.lastAnalysis) renderNdlChart(state.lastAnalysis.byNiederlassung);
+  });
+
+  el.btnExportPlays.addEventListener('click', exportPlays);
+  el.btnExportAnswers.addEventListener('click', exportAnswers);
 
   el.btnClear.addEventListener('click', () => {
     const ok = window.confirm(

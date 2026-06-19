@@ -115,6 +115,35 @@ const Analytics = (() => {
   }
 
   /**
+   * Trefferquote gruppiert nach einem Schluessel (z. B. Schwierigkeit oder Typ).
+   * `order` legt die Ausgabereihenfolge fest; nur Gruppen mit Antworten erscheinen.
+   */
+  function groupRates(responses, keyFn, order) {
+    const map = new Map();
+    responses.forEach((r) => {
+      const key = keyFn(r);
+      if (!map.has(key)) map.set(key, { key, total: 0, correct: 0 });
+      const g = map.get(key);
+      g.total += 1;
+      if (r.isCorrect) g.correct += 1;
+    });
+    const rows = [...map.values()].map((g) => ({
+      key: g.key, total: g.total, correct: g.correct, correctRate: rate(g.correct, g.total)
+    }));
+    if (order) {
+      rows.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+    }
+    return rows;
+  }
+
+  function median(nums) {
+    if (nums.length === 0) return 0;
+    const s = [...nums].sort((a, b) => a - b);
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2);
+  }
+
+  /**
    * Komplette Auswertung. filterNdl = null/'' bedeutet "alle Niederlassungen".
    */
   function compute(responses, leaderboard, questions, filterNdl) {
@@ -127,23 +156,32 @@ const Analytics = (() => {
 
     const totalAnswers = filterResp.length;
     const totalCorrect = filterResp.filter((r) => r.isCorrect).length;
-    const scoreSum = filterLb.reduce((s, e) => s + (Number(e.score) || 0), 0);
+    const scores = filterLb.map((e) => Number(e.score) || 0);
+    const times = filterLb.map((e) => Number(e.timeMs) || 0).filter((t) => t > 0);
+    const scoreSum = scores.reduce((s, v) => s + v, 0);
+    const players = new Set(filterLb.map((e) => `${e.name}`.toLowerCase().trim())).size;
 
     return {
       filter: filterNdl || null,
       kpis: {
         plays: filterLb.length,
+        players,
         answers: totalAnswers,
         correct: totalCorrect,
         correctRate: rate(totalCorrect, totalAnswers),
-        avgScore: filterLb.length > 0 ? Math.round(scoreSum / filterLb.length) : 0
+        avgScore: filterLb.length > 0 ? Math.round(scoreSum / filterLb.length) : 0,
+        bestScore: scores.length ? Math.max(...scores) : 0,
+        medianScore: median(scores),
+        avgTimeMs: times.length ? Math.round(times.reduce((s, v) => s + v, 0) / times.length) : 0
       },
+      byLevel: groupRates(filterResp, (r) => r.level, ['easy', 'medium', 'hard']),
+      byType: groupRates(filterResp, (r) => r.type || 'mc', ['mc', 'truefalse', 'order', 'match']),
       byNiederlassung: byNiederlassung(responses, leaderboard),
       byQuestion: byQuestion(filterResp, questions)
     };
   }
 
-  return { compute, byNiederlassung, byQuestion, niederlassungRanking };
+  return { compute, byNiederlassung, byQuestion, niederlassungRanking, groupRates };
 })();
 
 if (typeof window !== 'undefined') {

@@ -6,7 +6,7 @@
   <title>ZWP BIM Quiz – Gewerkezirkel</title>
   <meta name="description" content="Interaktives BIM-Quiz der ZWP Ingenieur-AG für den Gewerkezirkel.">
   <link rel="icon" href="assets/zwp-logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/styles.css?v=4">
+  <link rel="stylesheet" href="css/styles.css?v=5">
 </head>
 <body>
   <div class="app">
@@ -164,10 +164,47 @@
             <!-- KPIs -->
             <div id="kpi-grid" class="kpi-grid"></div>
 
+            <!-- Leistung nach Schwierigkeit & Fragetyp -->
+            <div class="analysis-block">
+              <h3 class="analysis-block__title">Leistung nach Schwierigkeit &amp; Fragetyp</h3>
+              <p class="analysis-block__hint">Trefferquote je Gruppe – zeigt, wo es hakt.</p>
+              <div class="split-2">
+                <div>
+                  <p class="mini-title">Nach Schwierigkeit</p>
+                  <div id="chart-level" class="chart chart--mini"></div>
+                </div>
+                <div>
+                  <p class="mini-title">Nach Fragetyp</p>
+                  <div id="chart-type" class="chart chart--mini"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Auffälligkeiten: schwerste / leichteste Fragen -->
+            <div class="analysis-block" id="block-highlights">
+              <h3 class="analysis-block__title">Auffälligkeiten</h3>
+              <div class="split-2">
+                <div class="highlight-card highlight-card--flop">
+                  <p class="mini-title">🔻 Schwerste Fragen</p>
+                  <ol id="list-flop" class="highlight-list"></ol>
+                </div>
+                <div class="highlight-card highlight-card--top">
+                  <p class="mini-title">🔺 Sicherste Fragen</p>
+                  <ol id="list-top" class="highlight-list"></ol>
+                </div>
+              </div>
+            </div>
+
             <!-- Niederlassungs-Vergleich -->
             <div class="analysis-block" id="block-ndl">
-              <h3 class="analysis-block__title">Niederlassungen im Vergleich</h3>
-              <p class="analysis-block__hint">Trefferquote (Balken) · Schnitt-Punkte &amp; Teilnahmen rechts</p>
+              <div class="analysis-block__head">
+                <h3 class="analysis-block__title">Niederlassungen im Vergleich</h3>
+                <div class="seg" id="ndl-metric">
+                  <button type="button" class="seg__btn is-active" data-metric="rate">Trefferquote</button>
+                  <button type="button" class="seg__btn" data-metric="score">Ø Punkte</button>
+                </div>
+              </div>
+              <p class="analysis-block__hint">Balken = gewählte Kennzahl · Werte rechts: Ø Punkte &amp; Teilnahmen</p>
               <div id="chart-ndl" class="chart"></div>
             </div>
 
@@ -187,6 +224,13 @@
               </p>
               <div id="chart-questions" class="q-analysis"></div>
             </div>
+
+            <!-- Export -->
+            <div class="analysis-block analysis-export">
+              <span class="muted">Daten exportieren:</span>
+              <button id="btn-export-plays" class="link-btn" type="button">Teilnahmen (CSV)</button>
+              <button id="btn-export-answers" class="link-btn" type="button">Antworten (CSV)</button>
+            </div>
           </div>
 
           <div class="leaderboard-actions">
@@ -203,11 +247,11 @@
     </footer>
   </div>
 
-  <script src="js/config.js?v=4"></script>
-  <script src="js/questions.js?v=4"></script>
-  <script src="js/storage.js?v=4"></script>
-  <script src="js/quiz.js?v=4"></script>
-  <script src="js/analytics.js?v=4"></script>
-  <script src="js/app.js?v=4"></script>
+  <script src="js/config.js?v=5"></script>
+  <script src="js/questions.js?v=5"></script>
+  <script src="js/storage.js?v=5"></script>
+  <script src="js/quiz.js?v=5"></script>
+  <script src="js/analytics.js?v=5"></script>
+  <script src="js/app.js?v=5"></script>
 </body>
 </html>
