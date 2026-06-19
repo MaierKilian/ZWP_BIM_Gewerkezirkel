@@ -13,7 +13,10 @@ und die Arbeitsweise bei ZWP und landen anschließend in einer Bestenliste.
 - **Wertung aus richtigen Antworten + Schnelligkeit**
   (schwierigere Fragen geben mehr Punkte, schnelle Antworten einen kleinen Bonus)
 - **Auflösung erst am Ende**: pro Frage richtige Antwort, eigene Wahl und Erklärung
-- **Bestenliste** (Top-Platzierungen mit Niederlassung, Punkten, Trefferquote, Zeit, Datum)
+- **Bestenliste** mit Umschalter:
+  - **Spieler** (Top-Platzierungen mit Niederlassung, Punkten, Trefferquote, Zeit, Datum)
+  - **Niederlassungen** (Standort-Ranking nach Ø-Punkten je Teilnahme, mit Trefferquote)
+- **Ergebnis-Screen** zeigt zusätzlich den aktuellen Rang der eigenen Niederlassung
 - **Auswertung & Statistik** (anonym):
   - Filter nach Niederlassung
   - KPIs: Teilnahmen, Trefferquote, Ø Punkte, Antworten gesamt

@@ -48,6 +48,21 @@ const Analytics = (() => {
   }
 
   /**
+   * Niederlassungs-Ranking fuer den Wettbewerb:
+   * sortiert nach Ø-Punkten je Teilnahme (Hauptkriterium), dann Trefferquote,
+   * dann Anzahl Teilnahmen. Nur Niederlassungen mit mindestens einer Teilnahme.
+   */
+  function niederlassungRanking(responses, leaderboard) {
+    return byNiederlassung(responses, leaderboard)
+      .filter((row) => row.plays > 0)
+      .sort((a, b) =>
+        b.avgScore - a.avgScore ||
+        b.correctRate - a.correctRate ||
+        b.plays - a.plays
+      );
+  }
+
+  /**
    * Auswertung je Frage fuer den gewaehlten Filter.
    * Nutzt den kanonischen Fragenkatalog (window.QUESTIONS) fuer Reihenfolge und
    * vollstaendige Antwortoptionen – auch fuer Optionen, die nie gewaehlt wurden.
@@ -108,7 +123,7 @@ const Analytics = (() => {
     };
   }
 
-  return { compute, byNiederlassung, byQuestion };
+  return { compute, byNiederlassung, byQuestion, niederlassungRanking };
 })();
 
 if (typeof window !== 'undefined') {

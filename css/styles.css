@@ -371,12 +371,25 @@ select.form__input {
   color: var(--muted);
 }
 
+.result-ndl {
+  margin: 0 0 20px;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  background: var(--zwp-blue-tint);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+}
+.result-ndl strong { color: var(--zwp-blue-dark); }
+
 .result-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
 }
+
+.ndl-ranking-hint { text-align: center; font-size: 0.82rem; margin: 14px 0 0; }
 
 /* ---------------- Auflösung ---------------- */
 .review { margin-top: 22px; display: flex; flex-direction: column; gap: 14px; }
@@ -538,6 +551,8 @@ select.form__input {
   padding: 6px 14px; border-radius: 999px; cursor: pointer;
 }
 .seg__btn.is-active { background: var(--zwp-blue); color: #fff; }
+.seg--full { display: flex; width: 100%; margin-bottom: 18px; }
+.seg--full .seg__btn { flex: 1; }
 
 /* Balken: Niederlassungs-Vergleich */
 .chart { display: flex; flex-direction: column; gap: 12px; }

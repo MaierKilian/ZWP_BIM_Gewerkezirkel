@@ -6,7 +6,7 @@
   <title>ZWP BIM Quiz – Gewerkezirkel</title>
   <meta name="description" content="Interaktives BIM-Quiz der ZWP Ingenieur-AG für den Gewerkezirkel.">
   <link rel="icon" href="assets/zwp-logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/styles.css?v=2">
+  <link rel="stylesheet" href="css/styles.css?v=3">
 </head>
 <body>
   <div class="app">
@@ -98,6 +98,8 @@
             </div>
           </div>
 
+          <p id="result-ndl-rank" class="result-ndl" hidden></p>
+
           <div class="result-actions">
             <button id="btn-show-leaderboard" class="btn btn--primary" type="button">Zur Bestenliste</button>
             <button id="btn-toggle-review" class="btn btn--ghost" type="button">Auflösung anzeigen</button>
@@ -115,7 +117,17 @@
             <h2 class="title">Bestenliste</h2>
             <span class="muted">Top der Workshop-Besucher</span>
           </div>
+
+          <div class="seg seg--full" id="lb-mode">
+            <button type="button" class="seg__btn is-active" data-mode="players">Spieler</button>
+            <button type="button" class="seg__btn" data-mode="ndl">Niederlassungen</button>
+          </div>
+
           <ol id="leaderboard-list" class="leaderboard"></ol>
+          <ol id="ndl-ranking" class="leaderboard" hidden></ol>
+          <p id="ndl-ranking-hint" class="muted ndl-ranking-hint" hidden>
+            Rang nach Ø-Punkten je Teilnahme.
+          </p>
           <p id="leaderboard-empty" class="muted leaderboard-empty" hidden>
             Noch keine Einträge – sei die/der Erste!
           </p>
@@ -191,11 +203,11 @@
     </footer>
   </div>
 
-  <script src="js/config.js?v=2"></script>
-  <script src="js/questions.js?v=2"></script>
-  <script src="js/storage.js?v=2"></script>
-  <script src="js/quiz.js?v=2"></script>
-  <script src="js/analytics.js?v=2"></script>
-  <script src="js/app.js?v=2"></script>
+  <script src="js/config.js?v=3"></script>
+  <script src="js/questions.js?v=3"></script>
+  <script src="js/storage.js?v=3"></script>
+  <script src="js/quiz.js?v=3"></script>
+  <script src="js/analytics.js?v=3"></script>
+  <script src="js/app.js?v=3"></script>
 </body>
 </html>

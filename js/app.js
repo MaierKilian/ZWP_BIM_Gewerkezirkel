@@ -39,6 +39,7 @@
     resultScore:      document.getElementById('result-score'),
     resultCorrect:    document.getElementById('result-correct'),
     resultTime:       document.getElementById('result-time'),
+    resultNdlRank:    document.getElementById('result-ndl-rank'),
     btnShowLb:        document.getElementById('btn-show-leaderboard'),
     btnToggleReview:  document.getElementById('btn-toggle-review'),
     btnRestartResult: document.getElementById('btn-restart-result'),
@@ -46,6 +47,9 @@
 
     lbList:           document.getElementById('leaderboard-list'),
     lbEmpty:          document.getElementById('leaderboard-empty'),
+    lbMode:           document.getElementById('lb-mode'),
+    ndlRanking:       document.getElementById('ndl-ranking'),
+    ndlRankingHint:   document.getElementById('ndl-ranking-hint'),
     btnPlayAgain:     document.getElementById('btn-play-again'),
     btnShowAnalysis:  document.getElementById('btn-show-analysis'),
     btnClear:         document.getElementById('btn-clear'),
@@ -76,7 +80,8 @@
     lastEntryId: null,
     timerId: null,
     analysisFilter: '',
-    analysisSort: 'hardest'
+    analysisSort: 'hardest',
+    lbMode: 'players'
   };
 
   // ---- Helfer ----
@@ -242,6 +247,23 @@
     el.review.hidden = true;
     el.btnToggleReview.textContent = 'Auflösung anzeigen';
     renderReview(r.details);
+    renderResultNdlRank();
+  }
+
+  function renderResultNdlRank() {
+    el.resultNdlRank.hidden = true;
+    Promise.all([Storage.getResponses(), Storage.getLeaderboard()])
+      .then(([responses, leaderboard]) => {
+        const ranking = Analytics.niederlassungRanking(responses, leaderboard);
+        const idx = ranking.findIndex((row) => row.ndl === state.playerNdl);
+        if (idx === -1 || ranking.length === 0) return;
+        const row = ranking[idx];
+        el.resultNdlRank.innerHTML =
+          `🏢 Niederlassung <strong></strong>: aktuell Platz ${idx + 1} von ${ranking.length} ` +
+          `<span class="muted">(Ø ${row.avgScore.toLocaleString('de-DE')} P · ${pct(row.correctRate)} richtig)</span>`;
+        el.resultNdlRank.querySelector('strong').textContent = row.ndl;
+        el.resultNdlRank.hidden = false;
+      });
   }
 
   function renderReview(details) {
@@ -278,6 +300,11 @@
 
   // ---- Bestenliste ----
   function renderLeaderboard() {
+    if (state.lbMode === 'ndl') { renderNdlRanking(); return; }
+    el.lbList.hidden = false;
+    el.ndlRanking.hidden = true;
+    el.ndlRankingHint.hidden = true;
+
     Storage.getLeaderboard().then((entries) => {
       el.lbList.innerHTML = '';
       el.lbEmpty.hidden = entries.length > 0;
@@ -314,6 +341,40 @@
 
   function medal(rank) {
     return { 1: '🥇', 2: '🥈', 3: '🥉' }[rank] || rank;
+  }
+
+  function renderNdlRanking() {
+    el.lbList.hidden = true;
+    el.ndlRanking.hidden = false;
+
+    Promise.all([Storage.getResponses(), Storage.getLeaderboard()])
+      .then(([responses, leaderboard]) => {
+        const ranking = Analytics.niederlassungRanking(responses, leaderboard);
+        el.ndlRanking.innerHTML = '';
+        el.lbEmpty.hidden = ranking.length > 0;
+        el.ndlRankingHint.hidden = ranking.length === 0;
+
+        ranking.forEach((row, i) => {
+          const rank = i + 1;
+          const li = document.createElement('li');
+          li.className = 'lb-item';
+          if (rank <= 3) li.classList.add(`lb-item--top${rank}`);
+          if (row.ndl === state.playerNdl) li.classList.add('is-me');
+
+          li.innerHTML = `
+            <span class="lb-rank">${rank <= 3 ? medal(rank) : rank}</span>
+            <span class="lb-name">
+              <span class="lb-name__text"></span>
+              <span class="lb-sub">${pct(row.correctRate)} richtig · ${row.plays} ${row.plays === 1 ? 'Teilnahme' : 'Teilnahmen'}</span>
+            </span>
+            <span class="lb-score">
+              <span class="lb-score__value">${row.avgScore.toLocaleString('de-DE')}</span>
+              <span class="lb-score__unit">Ø Punkte</span>
+            </span>`;
+          li.querySelector('.lb-name__text').textContent = row.ndl;
+          el.ndlRanking.appendChild(li);
+        });
+      });
   }
 
   // ---- Auswertung / Analyse ----
@@ -478,6 +539,14 @@
   el.ndlSelect.addEventListener('change', () => { el.ndlError.hidden = true; });
 
   el.btnNext.addEventListener('click', handleNext);
+
+  el.lbMode.addEventListener('click', (e) => {
+    const btn = e.target.closest('.seg__btn');
+    if (!btn) return;
+    state.lbMode = btn.dataset.mode;
+    el.lbMode.querySelectorAll('.seg__btn').forEach((b) => b.classList.toggle('is-active', b === btn));
+    renderLeaderboard();
+  });
 
   function gotoLeaderboard() { renderLeaderboard(); showScreen('leaderboard'); }
   el.showLbStart.addEventListener('click', gotoLeaderboard);
