@@ -13,10 +13,9 @@
  */
 const Quiz = (() => {
   const SELECTION = { easy: 3, medium: 6, hard: 6 };       // Summe = 15
-  const BASE_POINTS = { easy: 100, medium: 150, hard: 200 };
-  const MAX_TIME_BONUS = 50;
-  const BONUS_WINDOW_MS = 20000; // 20 s
   const MIN_INTERACTIVE = 3;     // mind. so viele Nicht-MC-Fragen pro Durchlauf (falls vorhanden)
+  // Wertung: 1 Punkt je richtige Antwort (max. 15). Bei Gleichstand entscheidet
+  // die kürzere Gesamtzeit (Tie-Break, siehe storage.js).
 
   function shuffle(arr) {
     const a = [...arr];
@@ -124,11 +123,6 @@ const Quiz = (() => {
     return { chosenText: null, correctText: null };
   }
 
-  function timeBonus(answerMs) {
-    if (answerMs >= BONUS_WINDOW_MS) return 0;
-    return Math.round(MAX_TIME_BONUS * (1 - answerMs / BONUS_WINDOW_MS));
-  }
-
   function create(allQuestions) {
     const questions = selectQuestions(allQuestions).map(prepare);
     const answers = new Array(questions.length).fill(null); // { value, answerMs }
@@ -154,7 +148,7 @@ const Quiz = (() => {
         const isCorrect = answered ? grade(rt, value) : false;
         if (isCorrect) {
           correct += 1;
-          score += BASE_POINTS[rt.level] + timeBonus(a.answerMs);
+          score += 1; // 1 Punkt je richtige Antwort
         }
         return {
           id: rt.id,
@@ -179,7 +173,7 @@ const Quiz = (() => {
     };
   }
 
-  return { create, grade, SELECTION, BASE_POINTS, MAX_TIME_BONUS };
+  return { create, grade, SELECTION };
 })();
 
 if (typeof window !== 'undefined') {

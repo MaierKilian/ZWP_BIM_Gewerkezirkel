@@ -6,7 +6,7 @@
   <title>ZWP BIM Quiz – Gewerkezirkel</title>
   <meta name="description" content="Interaktives BIM-Quiz der ZWP Ingenieur-AG für den Gewerkezirkel.">
   <link rel="icon" href="assets/zwp-logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/styles.css?v=5">
+  <link rel="stylesheet" href="css/styles.css?v=6">
 </head>
 <body>
   <div class="app">
@@ -44,8 +44,8 @@
 
           <ul class="meta-list">
             <li><strong>15</strong> Fragen</li>
-            <li><strong>Wertung</strong> richtige Antworten + Schnelligkeit</li>
-            <li><strong>Auflösung</strong> am Ende</li>
+            <li><strong>1 Punkt</strong> je richtige Antwort</li>
+            <li><strong>Gleichstand?</strong> Zeit entscheidet</li>
           </ul>
         </div>
 
@@ -85,12 +85,12 @@
 
           <div class="score-grid">
             <div class="score-box">
-              <span id="result-score" class="score-box__value">0</span>
-              <span class="score-box__label">Punkte</span>
+              <span id="result-score" class="score-box__value">0 / 15</span>
+              <span class="score-box__label">Punkte (richtige Antworten)</span>
             </div>
             <div class="score-box">
-              <span id="result-correct" class="score-box__value">0 / 15</span>
-              <span class="score-box__label">Richtig</span>
+              <span id="result-rank" class="score-box__value">–</span>
+              <span class="score-box__label">Platz</span>
             </div>
             <div class="score-box">
               <span id="result-time" class="score-box__value">00:00</span>
@@ -247,11 +247,11 @@
     </footer>
   </div>
 
-  <script src="js/config.js?v=5"></script>
-  <script src="js/questions.js?v=5"></script>
-  <script src="js/storage.js?v=5"></script>
-  <script src="js/quiz.js?v=5"></script>
-  <script src="js/analytics.js?v=5"></script>
-  <script src="js/app.js?v=5"></script>
+  <script src="js/config.js?v=6"></script>
+  <script src="js/questions.js?v=6"></script>
+  <script src="js/storage.js?v=6"></script>
+  <script src="js/quiz.js?v=6"></script>
+  <script src="js/analytics.js?v=6"></script>
+  <script src="js/app.js?v=6"></script>
 </body>
 </html>

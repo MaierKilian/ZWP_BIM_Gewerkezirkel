@@ -38,7 +38,7 @@
     resultName:       document.getElementById('result-name'),
     resultRankBadge:  document.getElementById('result-rank-badge'),
     resultScore:      document.getElementById('result-score'),
-    resultCorrect:    document.getElementById('result-correct'),
+    resultRank:       document.getElementById('result-rank'),
     resultTime:       document.getElementById('result-time'),
     resultNdlRank:    document.getElementById('result-ndl-rank'),
     btnShowLb:        document.getElementById('btn-show-leaderboard'),
@@ -361,9 +361,9 @@
   function renderResult() {
     const r = state.lastResult;
     el.resultName.textContent = state.playerName;
-    el.resultRankBadge.textContent = `Platz ${state.lastRank}. · ${state.playerNdl}`;
-    el.resultScore.textContent = r.score.toLocaleString('de-DE');
-    el.resultCorrect.textContent = `${r.correct} / ${r.total}`;
+    el.resultRankBadge.textContent = `Niederlassung ${state.playerNdl}`;
+    el.resultScore.textContent = `${r.score} / ${r.total}`;
+    el.resultRank.textContent = `${state.lastRank}.`;
     el.resultTime.textContent = formatTime(r.timeMs);
 
     el.review.hidden = true;

@@ -18,8 +18,9 @@
  * Response = { runId, qId, level, niederlassung, isCorrect, chosenText, correctText, date }
  */
 const Storage = (() => {
-  const LB_KEY = 'zwp_bim_quiz_leaderboard_v1';
-  const RESP_KEY = 'zwp_bim_quiz_responses_v1';
+  // v2: neue Wertung (1 Punkt je richtige Antwort) – startet mit frischen Daten.
+  const LB_KEY = 'zwp_bim_quiz_leaderboard_v2';
+  const RESP_KEY = 'zwp_bim_quiz_responses_v2';
 
   function read(key) {
     try {

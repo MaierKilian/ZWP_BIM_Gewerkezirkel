@@ -15,8 +15,8 @@ und die Arbeitsweise bei ZWP und landen anschließend in einer Bestenliste.
   - **Wahr/Falsch**
   - **Reihenfolge** (Elemente per ↑/↓ ordnen)
   - **Zuordnen** (Begriff → Passendes verbinden)
-- **Wertung aus richtigen Antworten + Schnelligkeit**
-  (schwierigere Fragen geben mehr Punkte, schnelle Antworten einen kleinen Bonus)
+- **Wertung: 1 Punkt je richtige Antwort** (max. 15) – bei Gleichstand
+  entscheidet die kürzere Gesamtzeit
 - **Auflösung erst am Ende**: pro Frage richtige Antwort, eigene Wahl und Erklärung
 - **Bestenliste** mit Umschalter:
   - **Spieler** (Top-Platzierungen mit Niederlassung, Punkten, Trefferquote, Zeit, Datum)
