@@ -529,24 +529,61 @@
         el.lbEmpty.hidden = ranking.length > 0;
         el.ndlRankingHint.hidden = ranking.length === 0;
 
+        // Spieler je Niederlassung (für die aufklappbaren Details)
+        const playersByNdl = {};
+        leaderboard.forEach((e) => {
+          const key = e.niederlassung || '—';
+          (playersByNdl[key] = playersByNdl[key] || []).push(e);
+        });
+
         ranking.forEach((row, i) => {
           const rank = i + 1;
           const li = document.createElement('li');
-          li.className = 'lb-item';
+          li.className = 'ndl-rank';
           if (rank <= 3) li.classList.add(`lb-item--top${rank}`);
           if (row.ndl === state.playerNdl) li.classList.add('is-me');
 
+          const players = (playersByNdl[row.ndl] || [])
+            .slice()
+            .sort((a, b) => b.score - a.score || a.timeMs - b.timeMs);
+
+          const detail = players.map((p, k) => `
+            <li class="ndl-player">
+              <span class="ndl-player__rank">${k + 1}</span>
+              <span class="ndl-player__name"></span>
+              <span class="ndl-player__pts">${p.score}/${p.total}</span>
+              <span class="ndl-player__time">${formatTime(p.timeMs)}</span>
+            </li>`).join('');
+
           li.innerHTML = `
-            <span class="lb-rank">${rank <= 3 ? medal(rank) : rank}</span>
-            <span class="lb-name">
-              <span class="lb-name__text"></span>
-              <span class="lb-sub">${pct(row.correctRate)} richtig · ${row.plays} ${row.plays === 1 ? 'Teilnahme' : 'Teilnahmen'}</span>
-            </span>
-            <span class="lb-score">
-              <span class="lb-score__value">${row.avgScore.toLocaleString('de-DE')}</span>
-              <span class="lb-score__unit">Ø Punkte</span>
-            </span>`;
+            <button type="button" class="ndl-rank__head" aria-expanded="false">
+              <span class="lb-rank">${rank <= 3 ? medal(rank) : rank}</span>
+              <span class="lb-name">
+                <span class="lb-name__text"></span>
+                <span class="lb-sub">${pct(row.correctRate)} richtig · ${row.plays} ${row.plays === 1 ? 'Teilnahme' : 'Teilnahmen'}</span>
+              </span>
+              <span class="lb-score">
+                <span class="lb-score__value">${row.avgScore.toLocaleString('de-DE')}</span>
+                <span class="lb-score__unit">Ø Punkte</span>
+              </span>
+              <span class="ndl-rank__caret">▾</span>
+            </button>
+            <ol class="ndl-rank__detail" hidden>${detail}</ol>`;
+
           li.querySelector('.lb-name__text').textContent = row.ndl;
+          li.querySelectorAll('.ndl-player__name').forEach((node, k) => {
+            node.textContent = players[k].name;
+          });
+
+          const head = li.querySelector('.ndl-rank__head');
+          const det = li.querySelector('.ndl-rank__detail');
+          head.addEventListener('click', () => {
+            const open = det.hidden;
+            det.hidden = !open;
+            head.setAttribute('aria-expanded', String(open));
+            li.classList.toggle('is-open', open);
+          });
+
           el.ndlRanking.appendChild(li);
         });
       });
