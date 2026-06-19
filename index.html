@@ -6,7 +6,7 @@
   <title>ZWP BIM Quiz – Gewerkezirkel</title>
   <meta name="description" content="Interaktives BIM-Quiz der ZWP Ingenieur-AG für den Gewerkezirkel.">
   <link rel="icon" href="assets/zwp-logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/styles.css?v=7">
+  <link rel="stylesheet" href="css/styles.css?v=8">
 </head>
 <body>
   <div class="app">
@@ -161,23 +161,26 @@
           </div>
 
           <div id="analysis-content">
-            <!-- KPIs -->
-            <div id="kpi-grid" class="kpi-grid"></div>
-
-            <!-- Leistung nach Schwierigkeit & Fragetyp -->
-            <div class="analysis-block">
-              <h3 class="analysis-block__title">Leistung nach Schwierigkeit &amp; Fragetyp</h3>
-              <p class="analysis-block__hint">Trefferquote je Gruppe – zeigt, wo es hakt.</p>
-              <div class="split-2">
-                <div>
-                  <p class="mini-title">Nach Schwierigkeit</p>
-                  <div id="chart-level" class="chart chart--mini"></div>
-                </div>
-                <div>
-                  <p class="mini-title">Nach Fragetyp</p>
-                  <div id="chart-type" class="chart chart--mini"></div>
-                </div>
+            <!-- Überblick: Donut richtig/falsch + KPIs -->
+            <div class="analysis-block overview">
+              <div class="overview__donut">
+                <div id="donut-overall"></div>
               </div>
+              <div id="kpi-grid" class="kpi-grid"></div>
+            </div>
+
+            <!-- Leistung nach Schwierigkeit (Ring-Gauges) -->
+            <div class="analysis-block">
+              <h3 class="analysis-block__title">Leistung nach Schwierigkeit</h3>
+              <p class="analysis-block__hint">Trefferquote je Stufe – zeigt, wo es hakt.</p>
+              <div id="chart-level" class="rings"></div>
+            </div>
+
+            <!-- Leistung nach Fragetyp (Ring-Gauges) -->
+            <div class="analysis-block">
+              <h3 class="analysis-block__title">Leistung nach Fragetyp</h3>
+              <p class="analysis-block__hint">Trefferquote je Fragetyp.</p>
+              <div id="chart-type" class="rings"></div>
             </div>
 
             <!-- Auffälligkeiten: schwerste / leichteste Fragen -->
@@ -204,7 +207,7 @@
                   <button type="button" class="seg__btn" data-metric="score">Ø Punkte</button>
                 </div>
               </div>
-              <p class="analysis-block__hint">Balken = gewählte Kennzahl · Werte rechts: Ø Punkte &amp; Teilnahmen</p>
+              <p class="analysis-block__hint">Balken = gewählte Kennzahl · Farbe = Leistung · Werte rechts: Ø Punkte &amp; Teilnahmen</p>
               <div id="chart-ndl" class="chart"></div>
             </div>
 
@@ -247,11 +250,11 @@
     </footer>
   </div>
 
-  <script src="js/config.js?v=7"></script>
-  <script src="js/questions.js?v=7"></script>
-  <script src="js/storage.js?v=7"></script>
-  <script src="js/quiz.js?v=7"></script>
-  <script src="js/analytics.js?v=7"></script>
-  <script src="js/app.js?v=7"></script>
+  <script src="js/config.js?v=8"></script>
+  <script src="js/questions.js?v=8"></script>
+  <script src="js/storage.js?v=8"></script>
+  <script src="js/quiz.js?v=8"></script>
+  <script src="js/analytics.js?v=8"></script>
+  <script src="js/app.js?v=8"></script>
 </body>
 </html>

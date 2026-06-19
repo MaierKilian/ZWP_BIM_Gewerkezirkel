@@ -59,6 +59,7 @@
     analysisEmpty:    document.getElementById('analysis-empty'),
     analysisContent:  document.getElementById('analysis-content'),
     kpiGrid:          document.getElementById('kpi-grid'),
+    donutOverall:     document.getElementById('donut-overall'),
     chartLevel:       document.getElementById('chart-level'),
     chartType:        document.getElementById('chart-type'),
     blockHighlights:  document.getElementById('block-highlights'),
@@ -614,21 +615,57 @@
 
   function renderAnalysis(data) {
     state.lastAnalysis = data;
+    renderOverviewDonut(data.kpis);
     renderKpis(data.kpis);
-    renderBreakdown(data);
+    renderRings(el.chartLevel, data.byLevel, (k) => LEVEL_LABEL[k] || k);
+    renderRings(el.chartType, data.byType, (k) => TYPE_LABEL[k] || k);
     renderHighlights(data.byQuestion);
     renderNdlChart(data.byNiederlassung);
     renderQuestionsChart(data.byQuestion);
+  }
+
+  // ---- Visualisierungs-Helfer (reines SVG) ----
+  // Ampelfarbe nach Trefferquote
+  function rateColor(rate) {
+    if (rate >= 0.75) return '#3FA66A'; // grün
+    if (rate >= 0.5) return '#E0B23C';  // gelb
+    return '#D5564E';                   // rot
+  }
+
+  // Donut für richtig/falsch gesamt
+  function donutSvg(correct, total) {
+    const rate = total > 0 ? correct / total : 0;
+    const r = 54, cx = 70, cy = 70, c = 2 * Math.PI * r;
+    const dash = (c * rate).toFixed(1);
+    const gap = (c - c * rate).toFixed(1);
+    return `
+      <svg viewBox="0 0 140 140" class="donut__svg" role="img" aria-label="Trefferquote gesamt">
+        <circle cx="${cx}" cy="${cy}" r="${r}" class="donut__bg"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" class="donut__fg"
+          stroke="${rateColor(rate)}" stroke-dasharray="${dash} ${gap}"/>
+        <text x="${cx}" y="${cy - 2}" class="donut__pct">${pct(rate)}</text>
+        <text x="${cx}" y="${cy + 18}" class="donut__cap">richtig</text>
+      </svg>`;
+  }
+
+  function renderOverviewDonut(k) {
+    const wrong = Math.max(0, k.answers - k.correct);
+    el.donutOverall.innerHTML = `
+      ${donutSvg(k.correct, k.answers)}
+      <div class="donut__legend">
+        <span class="donut__leg"><span class="dot dot--green"></span>${k.correct.toLocaleString('de-DE')} richtig</span>
+        <span class="donut__leg"><span class="dot dot--red"></span>${wrong.toLocaleString('de-DE')} falsch</span>
+      </div>`;
   }
 
   function renderKpis(k) {
     const cards = [
       { value: k.plays, label: 'Teilnahmen' },
       { value: k.players, label: 'Teilnehmende' },
-      { value: pct(k.correctRate), label: 'Trefferquote' },
       { value: k.avgScore.toLocaleString('de-DE'), label: 'Ø Punkte' },
       { value: k.bestScore.toLocaleString('de-DE'), label: 'Bestwert' },
-      { value: k.avgTimeMs ? formatTime(k.avgTimeMs) : '–', label: 'Ø Dauer' }
+      { value: k.avgTimeMs ? formatTime(k.avgTimeMs) : '–', label: 'Ø Dauer' },
+      { value: k.answers.toLocaleString('de-DE'), label: 'Antworten' }
     ];
     el.kpiGrid.innerHTML = cards.map((c) => `
       <div class="kpi">
@@ -637,23 +674,31 @@
       </div>`).join('');
   }
 
-  // Mini-Balkendiagramm (Label + Trefferquote) für Schwierigkeit/Typ
-  function miniBars(container, rows, labelFn) {
-    if (rows.length === 0) { container.innerHTML = '<p class="muted">Keine Daten.</p>'; return; }
-    container.innerHTML = rows.map((r) => `
-      <div class="mbar">
-        <span class="mbar__label"></span>
-        <div class="mbar__track"><div class="mbar__fill" style="width:${Math.round(r.correctRate * 100)}%"></div></div>
-        <span class="mbar__val">${pct(r.correctRate)} <span class="muted">(${r.correct}/${r.total})</span></span>
-      </div>`).join('');
-    container.querySelectorAll('.mbar__label').forEach((node, i) => {
-      node.textContent = labelFn(rows[i].key);
-    });
+  // Ring-Gauge (Kreis) für eine einzelne Trefferquote
+  function ringSvg(rate) {
+    const r = 30, cx = 38, cy = 38, c = 2 * Math.PI * r;
+    const dash = (c * rate).toFixed(1);
+    const gap = (c - c * rate).toFixed(1);
+    return `
+      <svg viewBox="0 0 76 76" class="ring__svg" role="img" aria-label="Trefferquote">
+        <circle cx="${cx}" cy="${cy}" r="${r}" class="ring__bg"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" class="ring__fg"
+          stroke="${rateColor(rate)}" stroke-dasharray="${dash} ${gap}"/>
+        <text x="${cx}" y="${cy + 5}" class="ring__pct">${pct(rate)}</text>
+      </svg>`;
   }
 
-  function renderBreakdown(data) {
-    miniBars(el.chartLevel, data.byLevel, (k) => LEVEL_LABEL[k] || k);
-    miniBars(el.chartType, data.byType, (k) => TYPE_LABEL[k] || k);
+  function renderRings(container, rows, labelFn) {
+    if (rows.length === 0) { container.innerHTML = '<p class="muted">Keine Daten.</p>'; return; }
+    container.innerHTML = rows.map((r) => `
+      <div class="ring">
+        <div class="ring__chart">${ringSvg(r.correctRate)}</div>
+        <span class="ring__label"></span>
+        <span class="ring__sub">${r.correct}/${r.total} richtig</span>
+      </div>`).join('');
+    container.querySelectorAll('.ring__label').forEach((node, i) => {
+      node.textContent = labelFn(rows[i].key);
+    });
   }
 
   function renderHighlights(byQuestion) {
@@ -693,21 +738,23 @@
     const sorted = [...rows].sort((a, b) =>
       byScore ? (b.avgScore - a.avgScore) : (b.correctRate - a.correctRate));
 
-    el.chartNdl.innerHTML = sorted.map((row) => {
+    el.chartNdl.innerHTML = sorted.map((row, i) => {
       const width = byScore ? Math.round((row.avgScore / maxScore) * 100) : Math.round(row.correctRate * 100);
       const value = byScore ? `${row.avgScore.toLocaleString('de-DE')} P` : pct(row.correctRate);
+      const color = rateColor(row.correctRate);
+      const crown = i === 0 ? '<span class="bar-row__crown">👑</span>' : '';
       return `
-        <div class="bar-row">
-          <span class="bar-row__label"></span>
+        <div class="bar-row${i === 0 ? ' bar-row--leader' : ''}">
+          <span class="bar-row__label">${crown}<span class="bar-row__name"></span></span>
           <div class="bar-row__track">
-            <div class="bar-row__fill" style="width:${width}%"></div>
+            <div class="bar-row__fill" style="width:${width}%;background:${color}"></div>
             <span class="bar-row__value">${value}</span>
           </div>
           <span class="bar-row__meta">${pct(row.correctRate)} · ${row.avgScore.toLocaleString('de-DE')} P · ${row.plays}×</span>
         </div>`;
     }).join('');
 
-    el.chartNdl.querySelectorAll('.bar-row__label').forEach((node, i) => {
+    el.chartNdl.querySelectorAll('.bar-row__name').forEach((node, i) => {
       node.textContent = sorted[i].ndl;
     });
   }
@@ -760,7 +807,7 @@
           <span class="q-item__num badge" data-level="${row.level}">${LEVEL_LABEL[row.level]}</span>
           <span class="q-item__type">${TYPE_LABEL[row.type] || ''}</span>
           <span class="q-item__text"></span>
-          <span class="q-item__rate">${pct(row.correctRate)}</span>
+          <span class="q-item__rate" style="color:${rateColor(row.correctRate)}">${pct(row.correctRate)}</span>
         </button>
         <div class="q-item__bar">
           <div class="stack stack--green" style="width:${correctPct}%"></div>
