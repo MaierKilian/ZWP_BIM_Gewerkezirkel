@@ -625,24 +625,24 @@
   }
 
   // ---- Visualisierungs-Helfer (reines SVG) ----
-  // Ampelfarbe nach Trefferquote
-  function rateColor(rate) {
-    if (rate >= 0.75) return '#3FA66A'; // grün
-    if (rate >= 0.5) return '#E0B23C';  // gelb
-    return '#D5564E';                   // rot
-  }
+  // Farb-Regeln:
+  //   Grün/Rot  = ausschließlich richtig/falsch (Korrektheit)
+  //   ZWP-Blau  = Quote/Menge (Höhe eines Werts, keine Wertung)
+  const COL_CORRECT = '#3FA66A'; // grün = richtig
+  const COL_WRONG   = '#D5564E'; // rot  = falsch
+  const COL_RATE    = '#4F8BBC'; // ZWP-blau = Quote/Magnitude
 
-  // Donut für richtig/falsch gesamt
+  // Donut für richtig/falsch gesamt: grüner Bogen = richtig, roter Rest = falsch
   function donutSvg(correct, total) {
     const rate = total > 0 ? correct / total : 0;
     const r = 54, cx = 70, cy = 70, c = 2 * Math.PI * r;
     const dash = (c * rate).toFixed(1);
     const gap = (c - c * rate).toFixed(1);
     return `
-      <svg viewBox="0 0 140 140" class="donut__svg" role="img" aria-label="Trefferquote gesamt">
-        <circle cx="${cx}" cy="${cy}" r="${r}" class="donut__bg"/>
+      <svg viewBox="0 0 140 140" class="donut__svg" role="img" aria-label="Anteil richtig gesamt">
+        <circle cx="${cx}" cy="${cy}" r="${r}" class="donut__bg" stroke="${COL_WRONG}"/>
         <circle cx="${cx}" cy="${cy}" r="${r}" class="donut__fg"
-          stroke="${rateColor(rate)}" stroke-dasharray="${dash} ${gap}"/>
+          stroke="${COL_CORRECT}" stroke-dasharray="${dash} ${gap}"/>
         <text x="${cx}" y="${cy - 2}" class="donut__pct">${pct(rate)}</text>
         <text x="${cx}" y="${cy + 18}" class="donut__cap">richtig</text>
       </svg>`;
@@ -674,7 +674,7 @@
       </div>`).join('');
   }
 
-  // Ring-Gauge (Kreis) für eine einzelne Trefferquote
+  // Ring-Gauge (Kreis) für eine Trefferquote – immer ZWP-Blau (Magnitude)
   function ringSvg(rate) {
     const r = 30, cx = 38, cy = 38, c = 2 * Math.PI * r;
     const dash = (c * rate).toFixed(1);
@@ -683,7 +683,7 @@
       <svg viewBox="0 0 76 76" class="ring__svg" role="img" aria-label="Trefferquote">
         <circle cx="${cx}" cy="${cy}" r="${r}" class="ring__bg"/>
         <circle cx="${cx}" cy="${cy}" r="${r}" class="ring__fg"
-          stroke="${rateColor(rate)}" stroke-dasharray="${dash} ${gap}"/>
+          stroke="${COL_RATE}" stroke-dasharray="${dash} ${gap}"/>
         <text x="${cx}" y="${cy + 5}" class="ring__pct">${pct(rate)}</text>
       </svg>`;
   }
@@ -741,13 +741,12 @@
     el.chartNdl.innerHTML = sorted.map((row, i) => {
       const width = byScore ? Math.round((row.avgScore / maxScore) * 100) : Math.round(row.correctRate * 100);
       const value = byScore ? `${row.avgScore.toLocaleString('de-DE')} P` : pct(row.correctRate);
-      const color = rateColor(row.correctRate);
       const crown = i === 0 ? '<span class="bar-row__crown">👑</span>' : '';
       return `
         <div class="bar-row${i === 0 ? ' bar-row--leader' : ''}">
           <span class="bar-row__label">${crown}<span class="bar-row__name"></span></span>
           <div class="bar-row__track">
-            <div class="bar-row__fill" style="width:${width}%;background:${color}"></div>
+            <div class="bar-row__fill" style="width:${width}%"></div>
             <span class="bar-row__value">${value}</span>
           </div>
           <span class="bar-row__meta">${pct(row.correctRate)} · ${row.avgScore.toLocaleString('de-DE')} P · ${row.plays}×</span>
@@ -807,7 +806,7 @@
           <span class="q-item__num badge" data-level="${row.level}">${LEVEL_LABEL[row.level]}</span>
           <span class="q-item__type">${TYPE_LABEL[row.type] || ''}</span>
           <span class="q-item__text"></span>
-          <span class="q-item__rate" style="color:${rateColor(row.correctRate)}">${pct(row.correctRate)}</span>
+          <span class="q-item__rate">${pct(row.correctRate)}</span>
         </button>
         <div class="q-item__bar">
           <div class="stack stack--green" style="width:${correctPct}%"></div>

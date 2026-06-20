@@ -25,9 +25,9 @@ und die Arbeitsweise bei ZWP und landen anschließend in einer Bestenliste.
 - **Auswertung & Statistik** (anonym):
   - Filter nach Niederlassung
   - KPIs: Teilnahmen, Teilnehmende, Trefferquote, Ø Punkte, Bestwert, Ø Dauer
-  - **Donut-Diagramm** richtig/falsch gesamt als Überblick
+  - **Donut-Diagramm** richtig/falsch gesamt als Überblick (grün = richtig, rot = falsch)
   - **Ring-Gauges** für Leistung nach **Schwierigkeit** und **Fragetyp**
-    (farbcodiert: grün ab 75 %, gelb ab 50 %, sonst rot)
+  - Klare Farb-Regeln: Grün/Rot nur für richtig/falsch, ZWP-Blau für Quoten/Mengen
   - **Auffälligkeiten**: schwerste & sicherste Fragen auf einen Blick
   - Diagramm „Niederlassungen im Vergleich" (umschaltbar Trefferquote / Ø Punkte)
   - Diagramm „Antworten je Frage" (richtig/falsch je Frage, schwerste zuerst)

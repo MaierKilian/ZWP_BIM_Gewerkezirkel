@@ -775,7 +775,7 @@ select.form__input {
 .overview { display: grid; grid-template-columns: 200px 1fr; gap: 24px; align-items: center; }
 .overview__donut { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .donut__svg { width: 170px; height: 170px; }
-.donut__bg { fill: none; stroke: var(--line); stroke-width: 14; }
+.donut__bg { fill: none; stroke-width: 14; }
 .donut__fg {
   fill: none; stroke-width: 14; stroke-linecap: round;
   transform: rotate(-90deg); transform-origin: center;
